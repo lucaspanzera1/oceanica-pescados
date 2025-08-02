@@ -1,0 +1,37 @@
+Business Source License 1.1
+
+Licensor: [Lucas Panzera]
+Software: Oceanica Pescados
+Licensed Work: Este repositório (exceto onde indicado de outra forma)
+Change Date: 2028-08-02
+Change License: Apache License, Version 2.0
+
+Términos
+
+A partir da data efetiva desta licença, você pode utilizar este software de acordo com os seguintes termos:
+
+1. **Uso Permitido**: Você pode copiar, modificar e usar o código-fonte deste software para fins **não comerciais**.
+
+2. **Uso Proibido**: É proibido:
+   - Oferecer este software como um serviço SaaS ou parte de um SaaS concorrente.
+   - Utilizar este software com finalidade **comercial direta**, inclusive venda, sublicenciamento, ou integração em produtos comerciais.
+
+3. **Uso Comercial sob Licença Separada**: Para uso comercial, entre em contato com o Licensor para obter uma licença comercial separada.
+
+4. **Data de Mudança de Licença**: Em **02 de agosto de 2028**, esta licença se converterá automaticamente para a licença **Apache 2.0**, permitindo uso irrestrito, inclusive comercial.
+
+5. **Sem Garantias**: O software é fornecido "como está", sem garantias ou condições de qualquer tipo.
+
+---
+
+## Exemplos de uso permitido:
+- Uma peixaria utilizar o software internamente para gerenciar vendas.
+- Estudantes analisarem o código para fins educacionais.
+
+## Exemplos de uso proibido:
+- Empresas revendendo o software.
+- Hospedar e oferecer o sistema como serviço para terceiros, sem autorização do Licensor.
+
+---
+
+Para licenciamento comercial ou dúvidas, contate: www.lucaspanzera.com
