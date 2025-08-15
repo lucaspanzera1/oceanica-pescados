@@ -6,7 +6,7 @@ O projeto, segue o padrão de **monorepositório**, usando **pnpm**, para gerenc
 ## Stacks
 - FrontEnd: React + Vite + TailwindCSS
 - Backend: NodeJS + Express
-- Banco de Dados: PostgreSQL *Supabase*
+- Banco de Dados: PostgreSQL
 
 ## Padrões de Projeto
 - Monorepo: Organização única para a Build rodar Front e Back.

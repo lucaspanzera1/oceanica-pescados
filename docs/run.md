@@ -6,6 +6,9 @@ git clone https://github.com/lucaspanzera1/oceanica-pescados
 cd osphone
 ```
 
+2. Prepare o Banco de Dados
+###### <a href="bd/bd.sql">Doc Banco de Dados</a>
+
 2. Instale as dependências
 ```bash
 pnpm install
