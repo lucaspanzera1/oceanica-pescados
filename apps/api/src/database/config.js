@@ -33,18 +33,28 @@ const testConnection = async () => {
 
 /**
  * Cria as tabelas necessárias se não existirem
+ * Suporta tanto uuid-ossp (antigo) quanto pgcrypto (moderno)
  */
 const initializeDatabase = async () => {
+  const client = await pool.connect();
   try {
-    const client = await pool.connect();
-    
-    // Habilitar extensão UUID se não estiver habilitada
-    await client.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
-    
+    let uuidFunction = 'uuid_generate_v4()';
+
+    // Tenta habilitar uuid-ossp primeiro
+    try {
+      await client.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
+      console.log('ℹ️ Extensão "uuid-ossp" habilitada');
+    } catch (err) {
+      console.warn('⚠️ Não foi possível habilitar "uuid-ossp", tentando "pgcrypto"...');
+      await client.query(`CREATE EXTENSION IF NOT EXISTS "pgcrypto"`);
+      uuidFunction = 'gen_random_uuid()';
+      console.log('ℹ️ Extensão "pgcrypto" habilitada');
+    }
+
     // Criar tabela de usuários com UUID
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        id UUID PRIMARY KEY DEFAULT ${uuidFunction},
         email VARCHAR(255) UNIQUE NOT NULL,
         password VARCHAR(255) NOT NULL,
         role VARCHAR(50) DEFAULT 'cliente',
@@ -59,10 +69,11 @@ const initializeDatabase = async () => {
     `);
 
     console.log('✅ Tabelas do banco de dados inicializadas!');
-    client.release();
   } catch (error) {
     console.error('❌ Erro ao inicializar banco de dados:', error.message);
     throw error;
+  } finally {
+    client.release();
   }
 };
 
