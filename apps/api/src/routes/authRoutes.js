@@ -1,6 +1,6 @@
 const express = require('express');
 const authController = require('../controllers/authController');
-const { authenticateToken, requireAdmin } = require('../middlewares/auth');
+const { authenticateToken, requireAdmin, requireOwnershipOrAdmin } = require('../middlewares/auth');
 
 const router = express.Router();
 
@@ -46,6 +46,39 @@ router.get('/protected', authenticateToken, (req, res) => {
       timestamp: new Date().toISOString()
     }
   });
+});
+
+// GET /auth/user/:id - Buscar usuário por ID (apenas próprio usuário ou admin)
+router.get('/user/:id', authenticateToken, requireOwnershipOrAdmin, async (req, res) => {
+  try {
+    const authService = new (require('../services/authService'))();
+    const user = await authService.findUserById(req.params.id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Usuário não encontrado'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Usuário encontrado com sucesso',
+      data: { user }
+    });
+  } catch (error) {
+    if (error.message.includes('ID de usuário inválido')) {
+      return res.status(400).json({
+        success: false,
+        message: error.message
+      });
+    }
+    
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
 });
 
 module.exports = router;

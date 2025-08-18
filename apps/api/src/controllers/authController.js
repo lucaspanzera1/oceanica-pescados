@@ -152,6 +152,14 @@ class AuthController {
     } catch (error) {
       console.error('Erro ao obter perfil:', error.message);
       
+      // Se for erro de UUID inválido
+      if (error.message.includes('ID de usuário inválido')) {
+        return res.status(400).json({
+          success: false,
+          message: error.message
+        });
+      }
+      
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'

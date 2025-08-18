@@ -38,10 +38,13 @@ const initializeDatabase = async () => {
   try {
     const client = await pool.connect();
     
-    // Criar tabela de usuários
+    // Habilitar extensão UUID se não estiver habilitada
+    await client.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
+    
+    // Criar tabela de usuários com UUID
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         email VARCHAR(255) UNIQUE NOT NULL,
         password VARCHAR(255) NOT NULL,
         role VARCHAR(50) DEFAULT 'cliente',

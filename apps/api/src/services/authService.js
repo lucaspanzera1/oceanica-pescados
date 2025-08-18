@@ -109,12 +109,17 @@ class AuthService {
   }
 
   /**
-   * Busca usuário por ID
-   * @param {number} id - ID do usuário
+   * Busca usuário por ID (UUID)
+   * @param {string} id - UUID do usuário
    * @returns {Object|null} Dados do usuário ou null se não encontrado
    */
   async findUserById(id) {
     try {
+      // Validar se é um UUID válido
+      if (!this.isValidUUID(id)) {
+        throw new Error('ID de usuário inválido');
+      }
+
       const query = `
         SELECT id, email, role, created_at, updated_at 
         FROM users 
@@ -128,6 +133,16 @@ class AuthService {
       console.error('Erro ao buscar usuário por ID:', error.message);
       throw error;
     }
+  }
+
+  /**
+   * Valida se uma string é um UUID válido
+   * @param {string} uuid - String para validar
+   * @returns {boolean} True se for UUID válido
+   */
+  isValidUUID(uuid) {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(uuid);
   }
 
   /**
