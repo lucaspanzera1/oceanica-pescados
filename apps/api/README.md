@@ -1,12 +1,53 @@
-# Autenticação JWT
+# API d
 
-Autenticação usando Node.js, Express, PostgreSQL e JWT.
+API usando Node.js, Express, PostgreSQL e JWT.
 
 ## 🚀 Tecnologias
 
 - **Node.js** - Runtime JavaScript
 - **Express** - Framework web
 - **PostgreSQL** - Banco de dados
+- **JWT** - Autenticação por tokens
+- **bcrypt** - Hash de senhas
+- **Helmet** - Segurança
+- **CORS** - Cross-Origin Resource Sharing
+
+## 📁 Estrutura do Projeto
+
+```
+src/
+├── controllers/          # Controllers das rotas
+│   └── authController.js
+├── routes/              # Definição das rotas
+│   └── authRoutes.js
+├── services/            # Lógica de negócio
+│   └── authService.js
+├── middlewares/         # Middlewares personalizados
+│   └── auth.js
+├── database/            # Configuração do banco
+│   └── config.js
+└── index.js             # Arquivo principal
+```
+
+## ⚙️ Configuração
+
+### 1. Instalar dependências
+
+```bash
+pnpm install
+```
+
+### 2. Configurar variáveis de ambiente
+
+# API de Autenticação JWT
+
+API completa de autenticação usando Node.js, Express, PostgreSQL e JWT com UUIDs.
+
+## 🚀 Tecnologias
+
+- **Node.js** - Runtime JavaScript
+- **Express** - Framework web
+- **PostgreSQL** - Banco de dados com UUID
 - **JWT** - Autenticação por tokens
 - **bcrypt** - Hash de senhas
 - **Helmet** - Segurança
@@ -47,7 +88,7 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_USER=admin
 DB_PASS=admin
-DB_NAME=oceanica
+DB_NAME=auth_db
 
 # Configuração JWT
 JWT_SECRET=sua_chave_secreta_super_segura_aqui_123456789
@@ -59,8 +100,14 @@ NODE_ENV=development
 
 ### 3. Configurar PostgreSQL
 
-Certifique-se de que o PostgreSQL está rodando no Docker: <a href="../../docs/bd/bd.md">Docs BD</a>
+Certifique-se de que o PostgreSQL está rodando no Docker:
 
+```bash
+# Criar banco de dados (se não existir)
+docker exec -it seu_container_postgres psql -U admin -c "CREATE DATABASE auth_db;"
+```
+
+A API criará automaticamente as tabelas necessárias na inicialização.
 
 ### 4. Executar a aplicação
 
@@ -78,10 +125,10 @@ pnpm start
 
 | Campo      | Tipo         | Descrição                    |
 |------------|--------------|------------------------------|
-| id         | SERIAL       | ID único do usuário          |
+| id         | UUID         | Identificador único (UUID v4)|
 | email      | VARCHAR(255) | Email único do usuário       |
-| password   | VARCHAR(255) | Hash da senha (bcrypt)       |
-| role       | VARCHAR(50)  | Função (cliente ou admin)    |
+| password   | VARCHAR(255) | Senha hasheada (bcrypt)      |
+| role       | VARCHAR(50)  | Função (cliente/admin)       |
 | created_at | TIMESTAMP    | Data de criação              |
 | updated_at | TIMESTAMP    | Data da última atualização   |
 
@@ -89,7 +136,7 @@ pnpm start
 
 ### Autenticação
 
-#### `POST /auth/register`
+#### POST /auth/register
 Registra um novo usuário no sistema.
 
 **Body:**
@@ -101,14 +148,14 @@ Registra um novo usuário no sistema.
 }
 ```
 
-**Resposta de Sucesso (201):**
+**Resposta (201):**
 ```json
 {
   "success": true,
   "message": "Usuário criado com sucesso",
   "data": {
     "user": {
-      "id": 1,
+      "id": "550e8400-e29b-41d4-a716-446655440000",
       "email": "usuario@exemplo.com",
       "role": "cliente",
       "created_at": "2024-01-15T10:30:00.000Z"
@@ -117,8 +164,8 @@ Registra um novo usuário no sistema.
 }
 ```
 
-#### `POST /auth/login`
-Faz login e retorna token JWT.
+#### POST /auth/login
+Autentica um usuário e retorna o token JWT.
 
 **Body:**
 ```json
@@ -128,7 +175,7 @@ Faz login e retorna token JWT.
 }
 ```
 
-**Resposta de Sucesso (200):**
+**Resposta (200):**
 ```json
 {
   "success": true,
@@ -136,7 +183,7 @@ Faz login e retorna token JWT.
   "data": {
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "user": {
-      "id": 1,
+      "id": "550e8400-e29b-41d4-a716-446655440000",
       "email": "usuario@exemplo.com",
       "role": "cliente",
       "created_at": "2024-01-15T10:30:00.000Z"
@@ -145,22 +192,22 @@ Faz login e retorna token JWT.
 }
 ```
 
-#### `GET /auth/profile`
-Obtém dados do usuário autenticado (requer token).
+#### GET /auth/profile
+Retorna o perfil do usuário autenticado.
 
-**Header:**
+**Headers:**
 ```
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
-**Resposta de Sucesso (200):**
+**Resposta (200):**
 ```json
 {
   "success": true,
   "message": "Perfil obtido com sucesso",
   "data": {
     "user": {
-      "id": 1,
+      "id": "550e8400-e29b-41d4-a716-446655440000",
       "email": "usuario@exemplo.com",
       "role": "cliente",
       "created_at": "2024-01-15T10:30:00.000Z"
@@ -169,85 +216,58 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 }
 ```
 
-#### `POST /auth/verify-token`
-Verifica se um token JWT é válido.
+#### GET /auth/user/:id
+Busca usuário por UUID (apenas próprio usuário ou admin).
 
-**Body:**
-```json
-{
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-}
-```
-
-**Resposta de Sucesso (200):**
-```json
-{
-  "success": true,
-  "message": "Token válido",
-  "data": {
-    "decoded": {
-      "id": 1,
-      "email": "usuario@exemplo.com",
-      "role": "cliente",
-      "iat": 1642248600,
-      "exp": 1642335000
-    }
-  }
-}
-```
-
-### Rotas Protegidas (Exemplos)
-
-#### `GET /auth/protected`
-Rota que requer autenticação JWT (qualquer usuário).
-
-**Header:**
+**Headers:**
 ```
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
-#### `GET /auth/admin`
-Rota que requer autenticação JWT + role admin.
+**Parâmetros:**
+- `id`: UUID do usuário (ex: 550e8400-e29b-41d4-a716-446655440000)
 
-**Header:**
-```
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
+### Rotas Protegidas
 
-### Utilitários
+#### GET /auth/protected
+Rota de exemplo que requer autenticação.
 
-#### `GET /health`
-Health check da API.
+#### GET /auth/admin
+Rota de exemplo que requer privilégios de administrador.
 
-**Resposta (200):**
-```json
-{
-  "success": true,
-  "message": "API funcionando corretamente",
-  "timestamp": "2024-01-15T10:30:00.000Z",
-  "environment": "development"
-}
-```
+## 🛡️ Segurança
 
-## 🔒 Autenticação JWT
+- **Senhas hasheadas** com bcrypt (salt rounds = 12)
+- **UUIDs** para identificação de usuários (não sequenciais)
+- **JWT tokens** com expiração de 24 horas
+- **Helmet** para headers de segurança
+- **CORS** configurado adequadamente
+- **Validação de entrada** em todos os endpoints
 
-### Como usar o token
+## 📝 Códigos de Resposta
 
-1. Faça login através do endpoint `/auth/login`
-2. Copie o token retornado
-3. Inclua o token no header `Authorization` das próximas requisições:
+| Código | Descrição                    |
+|--------|------------------------------|
+| 200    | Sucesso                      |
+| 201    | Criado com sucesso          |
+| 400    | Dados inválidos             |
+| 401    | Não autenticado             |
+| 403    | Sem permissão               |
+| 404    | Não encontrado              |
+| 409    | Conflito (email duplicado)   |
+| 500    | Erro interno do servidor     |
 
+## 🔧 Middleware de Autenticação
+
+O token JWT deve ser enviado no header Authorization:
 ```
 Authorization: Bearer SEU_TOKEN_AQUI
 ```
 
-### Estrutura do Token JWT
-
-O token JWT contém as seguintes informações:
-
+### Payload do JWT
 ```json
 {
-  "id": 1,
+  "id": "550e8400-e29b-41d4-a716-446655440000",
   "email": "usuario@exemplo.com",
   "role": "cliente",
   "iat": 1642248600,
@@ -256,115 +276,68 @@ O token JWT contém as seguintes informações:
 }
 ```
 
-- **id**: ID do usuário
-- **email**: Email do usuário  
-- **role**: Função do usuário (cliente ou admin)
-- **iat**: Timestamp de criação do token
-- **exp**: Timestamp de expiração (24h)
-- **iss**: Emissor do token
+## 🚀 Deploy
 
-## 🛡️ Middlewares de Segurança
-
-### `authenticateToken`
-Verifica se o token JWT é válido e adiciona `req.user` com os dados do usuário.
-
-### `requireAdmin`  
-Verifica se o usuário autenticado tem role `admin`. Deve ser usado após `authenticateToken`.
-
-### `requireOwnershipOrAdmin`
-Permite acesso apenas se o usuário for o dono do recurso ou admin.
-
-## ⚠️ Tratamento de Erros
-
-A API retorna respostas padronizadas para erros:
-
-### 400 - Bad Request
-```json
-{
-  "success": false,
-  "message": "Email e senha são obrigatórios"
-}
+### Variáveis de Ambiente em Produção
+```env
+NODE_ENV=production
+DB_HOST=seu_host_postgres
+DB_PORT=5432
+DB_USER=seu_usuario
+DB_PASS=sua_senha_segura
+DB_NAME=auth_db
+JWT_SECRET=sua_chave_super_secreta_256_bits
+PORT=3000
 ```
 
-### 401 - Unauthorized  
-```json
-{
-  "success": false,
-  "message": "Token de acesso requerido"
-}
+### Health Check
+```
+GET /health
 ```
 
-### 403 - Forbidden
-```json
-{
-  "success": false,
-  "message": "Acesso negado. Apenas administradores podem acessar este recurso."
-}
-```
+Retorna o status da API e informações do ambiente.
 
-### 404 - Not Found
-```json
-{
-  "success": false,
-  "message": "Rota GET /rota-inexistente não encontrada"
-}
-```
+## 📚 Exemplos de Uso
 
-### 409 - Conflict
-```json
-{
-  "success": false,
-  "message": "Email já cadastrado no sistema"
-}
-```
-
-### 500 - Internal Server Error
-```json
-{
-  "success": false,
-  "message": "Erro interno do servidor"
-}
-```
-
-## 🧪 Testando a API
-
-### Com cURL
-
-**Registrar usuário:**
+### Registrar usuário admin
 ```bash
 curl -X POST http://localhost:3000/auth/register \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "teste@exemplo.com",
-    "password": "senha123",
-    "role": "cliente"
+    "email": "admin@exemplo.com",
+    "password": "senhaadmin123",
+    "role": "admin"
   }'
 ```
 
-**Fazer login:**
+### Fazer login
 ```bash
 curl -X POST http://localhost:3000/auth/login \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "teste@exemplo.com",
-    "password": "senha123"
+    "email": "admin@exemplo.com",
+    "password": "senhaadmin123"
   }'
 ```
 
-**Acessar rota protegida:**
+### Acessar perfil
 ```bash
 curl -X GET http://localhost:3000/auth/profile \
   -H "Authorization: Bearer SEU_TOKEN_AQUI"
 ```
 
-## 📝 Logs
+## 🛠️ Desenvolvimento
 
+### Scripts disponíveis
+- `pnpm run dev` - Executa com nodemon
+- `pnpm start` - Executa em produção
+
+### Logs
 A API registra automaticamente:
+- Todas as requisições HTTP
+- Conexões com o banco
+- Erros e exceções
 
-- Todas as requisições HTTP com timestamp
-- Erros de autenticação
-- Conexões com o banco de dados
-- Inicialização da aplicação
 
 ## 🤝 Contribuição
 
