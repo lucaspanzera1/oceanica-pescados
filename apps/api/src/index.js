@@ -1,10 +1,13 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const compression = require('compression');
 require('dotenv').config();
 
 // Importações locais
-const { testConnection, initializeDatabase } = require('./database/config');
+const { testConnection, initializeDatabase, closePool } = require('./database/config');
+const { logger, httpLogger, logError } = require('./config/logger');
 const authRoutes = require('./routes/authRoutes');
 
 /**
@@ -24,29 +27,60 @@ class Server {
    * Configura os middlewares globais
    */
   setupMiddlewares() {
+    // Compressão de resposta
+    this.app.use(compression());
+    
     // Segurança com helmet
-    this.app.use(helmet());
+    this.app.use(helmet({
+      contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false
+    }));
+    
+    // Rate limiting
+    const limiter = rateLimit({
+      windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutos
+      max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // máximo de requests
+      message: {
+        success: false,
+        message: 'Muitas tentativas. Tente novamente em alguns minutos.',
+        retryAfter: Math.ceil((parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 900000) / 60000)
+      },
+      standardHeaders: true,
+      legacyHeaders: false
+    });
+    
+    this.app.use('/auth', limiter);
     
     // CORS - permite requisições de diferentes origens
+    const allowedOrigins = process.env.ALLOWED_ORIGINS 
+      ? process.env.ALLOWED_ORIGINS.split(',')
+      : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173'];
+      
     this.app.use(cors({
-      origin: process.env.NODE_ENV === 'production' 
-        ? ['https://lucaspanzera.com'] 
-        : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173'],
-      credentials: true
+      origin: allowedOrigins,
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
     }));
 
     // Parser de JSON
-    this.app.use(express.json({ limit: '10mb' }));
+    this.app.use(express.json({ 
+      limit: '10mb',
+      strict: true
+    }));
     
     // Parser de URL encoded
-    this.app.use(express.urlencoded({ extended: true }));
+    this.app.use(express.urlencoded({ 
+      extended: true,
+      limit: '10mb'
+    }));
 
-    // Middleware de log personalizado
-    this.app.use((req, res, next) => {
-      const timestamp = new Date().toISOString();
-      console.log(`[${timestamp}] ${req.method} ${req.path}`);
-      next();
-    });
+    // Logger HTTP personalizado
+    this.app.use(httpLogger);
+    
+    // Trust proxy em produção (para IP real do cliente)
+    if (process.env.NODE_ENV === 'production') {
+      this.app.set('trust proxy', 1);
+    }
   }
 
   /**
@@ -55,12 +89,22 @@ class Server {
   setupRoutes() {
     // Rota de health check
     this.app.get('/health', (req, res) => {
-      res.json({
+      const healthData = {
         success: true,
         message: 'API funcionando corretamente',
         timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV || 'development'
-      });
+        environment: process.env.NODE_ENV || 'development',
+        version: process.env.npm_package_version || '1.0.0',
+        uptime: process.uptime(),
+        memory: process.memoryUsage()
+      };
+      
+      // Em produção, remover dados sensíveis
+      if (process.env.NODE_ENV === 'production') {
+        delete healthData.memory;
+      }
+      
+      res.json(healthData);
     });
 
     // Rotas de autenticação
@@ -68,6 +112,11 @@ class Server {
 
     // Rota para 404 - não encontrado
     this.app.use('*', (req, res) => {
+      logger.warn(`Rota não encontrada: ${req.method} ${req.originalUrl}`, {
+        ip: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+      
       res.status(404).json({
         success: false,
         message: `Rota ${req.method} ${req.originalUrl} não encontrada`,
@@ -78,7 +127,8 @@ class Server {
             'POST /auth/verify-token': 'Verificar token JWT',
             'GET /auth/profile': 'Obter perfil (requer autenticação)',
             'GET /auth/protected': 'Rota protegida (requer autenticação)',
-            'GET /auth/admin': 'Rota admin (requer autenticação + admin)'
+            'GET /auth/admin': 'Rota admin (requer autenticação + admin)',
+            'GET /auth/user/:id': 'Buscar usuário por UUID'
           },
           general: {
             'GET /health': 'Health check da API'
@@ -94,7 +144,8 @@ class Server {
   setupErrorHandling() {
     // Middleware de tratamento de erros
     this.app.use((error, req, res, next) => {
-      console.error('Erro não tratado:', error);
+      // Log do erro
+      logError(error, req);
 
       // Erro de JSON malformado
       if (error instanceof SyntaxError && error.status === 400 && 'body' in error) {
@@ -103,13 +154,29 @@ class Server {
           message: 'JSON inválido no corpo da requisição'
         });
       }
+      
+      // Erro de rate limit
+      if (error.type === 'rate-limit') {
+        return res.status(429).json({
+          success: false,
+          message: 'Muitas tentativas. Tente novamente em alguns minutos.'
+        });
+      }
 
       // Erro genérico
-      res.status(500).json({
+      const statusCode = error.statusCode || error.status || 500;
+      const response = {
         success: false,
-        message: 'Erro interno do servidor',
-        ...(process.env.NODE_ENV === 'development' && { error: error.message })
-      });
+        message: statusCode === 500 ? 'Erro interno do servidor' : error.message
+      };
+      
+      // Em desenvolvimento, incluir detalhes do erro
+      if (process.env.NODE_ENV === 'development') {
+        response.error = error.message;
+        response.stack = error.stack;
+      }
+      
+      res.status(statusCode).json(response);
     });
   }
 
@@ -118,6 +185,8 @@ class Server {
    */
   async start() {
     try {
+      logger.info('🚀 Iniciando servidor...');
+      
       // Testa conexão com o banco
       await testConnection();
       
@@ -125,38 +194,83 @@ class Server {
       await initializeDatabase();
       
       // Inicia o servidor
-      this.app.listen(this.port, () => {
-        console.log(`Servidor rodando na porta ${this.port}`);
-        console.log(`URL local: http://localhost:${this.port}`);
-        console.log(`Health check: http://localhost:${this.port}/health`);
-        console.log(`Rotas de auth: http://localhost:${this.port}/auth/*`);
+      const server = this.app.listen(this.port, () => {
+        logger.info(`✅ Servidor rodando na porta ${this.port}`, {
+          environment: process.env.NODE_ENV,
+          port: this.port,
+          pid: process.pid
+        });
+        
+        console.log(`📍 URL local: http://localhost:${this.port}`);
+        console.log(`🏥 Health check: http://localhost:${this.port}/health`);
+        console.log(`🔐 Rotas de auth: http://localhost:${this.port}/auth/*`);
+        
+        if (process.env.NODE_ENV === 'development') {
+          console.log('\n📚 Documentação das rotas:');
+          console.log('  POST /auth/register - Registrar usuário');
+          console.log('  POST /auth/login - Fazer login');
+          console.log('  GET /auth/profile - Obter perfil (requer token)');
+          console.log('  GET /auth/protected - Rota protegida (requer token)');
+          console.log('  GET /auth/admin - Rota admin (requer token + admin)');
+          console.log('  GET /auth/user/:id - Buscar usuário por UUID');
+        }
       });
 
+      // Configurar graceful shutdown
+      this.setupGracefulShutdown(server);
+
     } catch (error) {
-      console.error('❌ Erro ao iniciar o servidor:', error.message);
+      logger.error('❌ Erro ao iniciar o servidor', { error: error.message, stack: error.stack });
       process.exit(1);
     }
   }
+  
+  /**
+   * Configura o encerramento gracioso do servidor
+   */
+  setupGracefulShutdown(server) {
+    const gracefulShutdown = (signal) => {
+      logger.info(`📶 ${signal} recebido, encerrando servidor graciosamente...`);
+      
+      server.close(async () => {
+        logger.info('🔒 Servidor HTTP fechado');
+        
+        try {
+          await closePool();
+          logger.info('✅ Shutdown gracioso concluído');
+          process.exit(0);
+        } catch (error) {
+          logger.error('❌ Erro durante shutdown', { error: error.message });
+          process.exit(1);
+        }
+      });
+      
+      // Force close após 10 segundos
+      setTimeout(() => {
+        logger.error('⚠️  Forçando encerramento após timeout');
+        process.exit(1);
+      }, 10000);
+    };
+    
+    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+  }
 }
-
-// Tratamento de sinais do processo
-process.on('SIGTERM', () => {
-  console.log('SIGTERM recebido, encerrando servidor graciosamente...');
-  process.exit(0);
-});
-
-process.on('SIGINT', () => {
-  console.log('\nSIGINT recebido, encerrando servidor graciosamente...');
-  process.exit(0);
-});
 
 // Tratamento de erros não capturados
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('Promise rejeitada não tratada:', promise, 'razão:', reason);
+  logger.error('Promise rejeitada não tratada', { 
+    reason: reason?.message || reason, 
+    stack: reason?.stack,
+    promise: promise.toString()
+  });
 });
 
 process.on('uncaughtException', (error) => {
-  console.error('Exceção não capturada:', error);
+  logger.error('Exceção não capturada', { 
+    error: error.message, 
+    stack: error.stack 
+  });
   process.exit(1);
 });
 
