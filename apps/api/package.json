@@ -1,7 +1,7 @@
 {
-  "name": "api-auth-jwt",
+  "name": "oceanicapescados-api",
   "version": "1.0.0",
-  "description": "API de autenticação com JWT, Express e PostgreSQL",
+  "description": "API com JWT, Express e PostgreSQL",
   "main": "src/index.js",
   "scripts": {
     "dev": "nodemon src/index.js",

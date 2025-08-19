@@ -194,7 +194,7 @@ class Server {
       await initializeDatabase();
       
       // Inicia o servidor
-      const server = this.app.listen(this.port, () => {
+      const server = this.app.listen(this.port, '0.0.0.0', () => {
         logger.info(`✅ Servidor rodando na porta ${this.port}`, {
           environment: process.env.NODE_ENV,
           port: this.port,
