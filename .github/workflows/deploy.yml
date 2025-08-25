@@ -1,0 +1,67 @@
+name: Deploy API via Cloudflare Tunnel
+
+on:
+  push:
+    branches: [main]
+    # Removendo o filtro de paths temporariamente para testar
+  workflow_dispatch: # permite executar manualmente
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Cloudflared SSH Client
+        uses: tichopad/setup-cloudflared-ssh-client@v1
+        
+      - name: Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          
+      - name: Debug Secrets (Safe)
+        run: |
+          echo "SSH_HOST is set: ${{ secrets.SSH_HOST != '' }}"
+          echo "SSH_USER is set: ${{ secrets.SSH_USER != '' }}"
+          echo "SSH_PRIVATE_KEY is set: ${{ secrets.SSH_PRIVATE_KEY != '' }}"
+          
+      - name: Configure SSH Client
+        run: |
+          cat > ~/.ssh/config << EOF
+          Host homelab
+            HostName ${{ secrets.SSH_HOST }}
+            User ${{ secrets.SSH_USER }}
+            ProxyCommand cloudflared access ssh --hostname %h
+            IdentityFile ~/.ssh/id_rsa
+            StrictHostKeyChecking no
+          EOF
+          
+      - name: Debug SSH Config
+        run: |
+          echo "=== SSH Config ==="
+          cat ~/.ssh/config
+          echo "=================="
+          
+      - name: Deploy to Homelab
+        run: |
+          ssh homelab << 'EOF'
+            cd ~/Github/oceanica-pescados
+            git pull origin main
+            pnpm install --frozen-lockfile
+            pnpm turbo build --filter=oceanica-pescados-api
+            docker-compose down api
+            docker-compose up -d --build api
+            
+            # Health check
+            sleep 10
+            if curl -f http://localhost:30002/health; then
+              echo "✅ Deploy successful!"
+            else
+              echo "❌ Health check failed"
+              exit 1
+            fi
+          EOF

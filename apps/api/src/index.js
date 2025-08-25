@@ -91,7 +91,7 @@ class Server {
     this.app.get('/health', (req, res) => {
       const healthData = {
         success: true,
-        message: 'API funcionando corretamente',
+        message: 'API Oceanica Pescados',
         timestamp: new Date().toISOString(),
         environment: process.env.NODE_ENV || 'development',
         version: process.env.npm_package_version || '1.0.0',
