@@ -9,6 +9,7 @@ require('dotenv').config();
 const { testConnection, initializeDatabase, closePool } = require('./database/config');
 const { logger, httpLogger, logError } = require('./config/logger');
 const authRoutes = require('./routes/authRoutes');
+const productRoutes = require('./routes/productRoutes');
 
 /**
  * Configuração e inicialização do servidor Express
@@ -49,6 +50,7 @@ class Server {
     });
     
     this.app.use('/auth', limiter);
+    this.app.use('/products', limiter);
     
     // CORS - permite requisições de diferentes origens
     const allowedOrigins = process.env.ALLOWED_ORIGINS 
@@ -110,6 +112,9 @@ class Server {
     // Rotas de autenticação
     this.app.use('/auth', authRoutes);
 
+    // Rotas de produtos
+    this.app.use('/products', productRoutes);
+
     // Rota para 404 - não encontrado
     this.app.use('*', (req, res) => {
       logger.warn(`Rota não encontrada: ${req.method} ${req.originalUrl}`, {
@@ -129,6 +134,14 @@ class Server {
             'GET /auth/protected': 'Rota protegida (requer autenticação)',
             'GET /auth/admin': 'Rota admin (requer autenticação + admin)',
             'GET /auth/user/:id': 'Buscar usuário por UUID'
+          },
+          products: {
+            'GET /products': 'Listar produtos (público)',
+            'GET /products/:id': 'Buscar produto por UUID (público)',
+            'POST /products': 'Criar produto (requer admin)',
+            'PUT /products/:id': 'Atualizar produto (requer admin)',
+            'DELETE /products/:id': 'Remover produto (requer admin)',
+            'PATCH /products/:id/stock': 'Atualizar estoque (requer admin)'
           },
           general: {
             'GET /health': 'Health check da API'
@@ -201,18 +214,27 @@ class Server {
           pid: process.pid
         });
         
-        console.log(`📍 URL local: http://localhost:${this.port}`);
+        console.log(`🌐 URL local: http://localhost:${this.port}`);
         console.log(`🏥 Health check: http://localhost:${this.port}/health`);
         console.log(`🔐 Rotas de auth: http://localhost:${this.port}/auth/*`);
+        console.log(`📦 Rotas de produtos: http://localhost:${this.port}/products/*`);
         
         if (process.env.NODE_ENV === 'development') {
           console.log('\n📚 Documentação das rotas:');
-          console.log('  POST /auth/register - Registrar usuário');
-          console.log('  POST /auth/login - Fazer login');
-          console.log('  GET /auth/profile - Obter perfil (requer token)');
-          console.log('  GET /auth/protected - Rota protegida (requer token)');
-          console.log('  GET /auth/admin - Rota admin (requer token + admin)');
-          console.log('  GET /auth/user/:id - Buscar usuário por UUID');
+          console.log('  AUTH:');
+          console.log('    POST /auth/register - Registrar usuário');
+          console.log('    POST /auth/login - Fazer login');
+          console.log('    GET /auth/profile - Obter perfil (requer token)');
+          console.log('    GET /auth/protected - Rota protegida (requer token)');
+          console.log('    GET /auth/admin - Rota admin (requer token + admin)');
+          console.log('    GET /auth/user/:id - Buscar usuário por UUID');
+          console.log('  PRODUTOS:');
+          console.log('    GET /products - Listar produtos (público)');
+          console.log('    GET /products/:id - Buscar produto (público)');
+          console.log('    POST /products - Criar produto (requer admin)');
+          console.log('    PUT /products/:id - Atualizar produto (requer admin)');
+          console.log('    DELETE /products/:id - Remover produto (requer admin)');
+          console.log('    PATCH /products/:id/stock - Atualizar estoque (requer admin)');
         }
       });
 
@@ -230,7 +252,7 @@ class Server {
    */
   setupGracefulShutdown(server) {
     const gracefulShutdown = (signal) => {
-      logger.info(`📶 ${signal} recebido, encerrando servidor graciosamente...`);
+      logger.info(`🔶 ${signal} recebido, encerrando servidor graciosamente...`);
       
       server.close(async () => {
         logger.info('🔒 Servidor HTTP fechado');
@@ -247,7 +269,7 @@ class Server {
       
       // Force close após 10 segundos
       setTimeout(() => {
-        logger.error('⚠️  Forçando encerramento após timeout');
+        logger.error('⚠️ Forçando encerramento após timeout');
         process.exit(1);
       }, 10000);
     };
