@@ -32,6 +32,19 @@ const testConnection = async () => {
 };
 
 /**
+ * Fecha o pool de conexões
+ */
+const closePool = async () => {
+  try {
+    await pool.end();
+    console.log('✅ Pool de conexões PostgreSQL fechado');
+  } catch (error) {
+    console.error('❌ Erro ao fechar pool de conexões:', error.message);
+    throw error;
+  }
+};
+
+/**
  * Cria as tabelas necessárias se não existirem
  * Suporta tanto uuid-ossp (antigo) quanto pgcrypto (moderno)
  */
@@ -63,9 +76,39 @@ const initializeDatabase = async () => {
       )
     `);
 
-    // Criar índice no email para melhor performance
+    // Criar tabela de produtos com UUID
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS products (
+        id UUID PRIMARY KEY DEFAULT ${uuidFunction},
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        price NUMERIC(10,2) NOT NULL CHECK (price > 0),
+        stock INT DEFAULT 0 CHECK (stock >= 0),
+        image_url TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Criar índices para melhor performance
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_products_name ON products(name)
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_products_price ON products(price)
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_products_stock ON products(stock)
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_products_created_at ON products(created_at)
     `);
 
     console.log('✅ Tabelas do banco de dados inicializadas!');
@@ -80,5 +123,6 @@ const initializeDatabase = async () => {
 module.exports = {
   pool,
   testConnection,
+  closePool,
   initializeDatabase
 };

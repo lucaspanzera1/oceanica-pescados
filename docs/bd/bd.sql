@@ -52,3 +52,15 @@ CREATE OR REPLACE TRIGGER update_users_updated_at
     ON public.users
     FOR EACH ROW
     EXECUTE FUNCTION public.update_updated_at_column();
+
+-- PRODUTOS
+CREATE TABLE IF NOT EXISTS public.products (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    price NUMERIC(10,2) NOT NULL,
+    stock INT DEFAULT 0,
+    image_url TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
