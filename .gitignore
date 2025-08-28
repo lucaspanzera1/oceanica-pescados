@@ -7,6 +7,7 @@ pnpm-debug.log*
 .turbo
 # Arquivos de ambiente
 apps/api/.env
+apps/api/.env.dev
 .env
 .env.local
 .env.development

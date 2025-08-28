@@ -17,6 +17,15 @@ services:
     networks:
       - pgadmin-postgres_default
 
+        web:
+    build: ./apps/web
+    container_name: oceanicapescados-web
+    ports:
+      - "30001:80"
+    restart: unless-stopped
+    networks:
+      - pgadmin-postgres_default
+
 networks:
   pgadmin-postgres_default:
     external: true

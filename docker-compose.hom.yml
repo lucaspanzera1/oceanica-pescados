@@ -5,12 +5,12 @@ services:
     build: ./apps/api
     container_name: oceanicapescados-api
     ports:
-      - "30002:30002"
+      - "3000:3000"
     environment:
       - NODE_ENV=production
       - DATABASE_URL=postgres://postgres:postgres123@postgres:5432/db
     env_file:
-      - ./apps/api/.env
+      - ./apps/api/.env.dev
     restart: unless-stopped
     networks:
       - github_default
