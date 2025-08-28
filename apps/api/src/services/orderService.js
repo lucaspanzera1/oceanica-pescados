@@ -1,10 +1,15 @@
 const { pool } = require('../database/config');
+const OrderItemService = require('./orderItemService');
 
 /**
  * Service responsável pela lógica de pedidos
  */
 class OrderService {
   
+  constructor() {
+    this.orderItemService = new OrderItemService();
+  }
+
   /**
    * Cria um novo pedido a partir do carrinho do usuário
    * @param {string} userId - UUID do usuário
@@ -57,7 +62,7 @@ class OrderService {
 
       const totalPrice = totalProducts + parseFloat(shippingPrice);
 
-      // Criar o pedido
+      // Criar o pedido (sem os itens ainda)
       const orderQuery = `
         INSERT INTO orders (user_id, shipping_price, total_price) 
         VALUES ($1, $2, $3) 
@@ -72,29 +77,25 @@ class OrderService {
       
       const order = orderResult.rows[0];
 
-      // Criar itens do pedido
-      const orderItemsQuery = `
-        INSERT INTO order_items (order_id, product_id, product_name, product_price, quantity, total_price) 
-        VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING *
-      `;
+      // Preparar itens para o OrderItemService
+      const itemsForOrderService = cartItems.map(item => ({
+        product_id: item.product_id,
+        quantity: parseInt(item.quantity),
+        price: parseFloat(item.price)
+      }));
 
-      const orderItems = [];
+      // Usar o OrderItemService para criar os itens
+      // Primeiro, fazemos commit da transação atual
+      await client.query('COMMIT');
+      
+      // Agora usamos o OrderItemService (que tem sua própria transação)
+      const orderItems = await this.orderItemService.createOrderItems(order.id, itemsForOrderService);
+
+      // Iniciar nova transação para atualizar estoque e limpar carrinho
+      await client.query('BEGIN');
+
+      // Atualizar estoque dos produtos
       for (const item of cartItems) {
-        const itemTotal = parseFloat(item.price) * parseInt(item.quantity);
-        
-        const itemResult = await client.query(orderItemsQuery, [
-          order.id,
-          item.product_id,
-          item.name,
-          parseFloat(item.price),
-          parseInt(item.quantity),
-          itemTotal
-        ]);
-        
-        orderItems.push(itemResult.rows[0]);
-
-        // Atualizar estoque do produto
         await client.query(
           'UPDATE products SET stock = stock - $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
           [item.quantity, item.product_id]
@@ -164,20 +165,12 @@ class OrderService {
 
       const order = orderResult.rows[0];
 
-      // Buscar itens do pedido
-      const itemsQuery = `
-        SELECT id, order_id, product_id, product_name, product_price, 
-               quantity, total_price, created_at
-        FROM order_items
-        WHERE order_id = $1
-        ORDER BY created_at
-      `;
-      
-      const itemsResult = await pool.query(itemsQuery, [orderId]);
+      // Buscar itens do pedido usando o OrderItemService
+      const items = await this.orderItemService.getOrderItems(orderId);
       
       return {
         ...order,
-        items: itemsResult.rows
+        items
       };
       
     } catch (error) {
@@ -352,10 +345,9 @@ class OrderService {
 
       // Se cancelando pedido, devolver estoque
       if (newStatus === 'cancelado' && currentOrder.status !== 'cancelado') {
-        const itemsQuery = 'SELECT product_id, quantity FROM order_items WHERE order_id = $1';
-        const itemsResult = await client.query(itemsQuery, [orderId]);
+        const items = await this.orderItemService.getOrderItems(orderId);
         
-        for (const item of itemsResult.rows) {
+        for (const item of items) {
           await client.query(
             'UPDATE products SET stock = stock + $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
             [item.quantity, item.product_id]
@@ -468,17 +460,19 @@ class OrderService {
           GROUP BY TO_CHAR(created_at, 'YYYY-MM')
           ORDER BY month DESC
         `,
-        // Produtos mais vendidos
+        // Produtos mais vendidos (usando OrderItemService)
         topProducts: `
           SELECT 
-            oi.product_name,
+            oi.product_id,
+            p.name as product_name,
             SUM(oi.quantity) as total_quantity,
             COUNT(DISTINCT oi.order_id) as orders_count,
-            SUM(oi.total_price) as total_revenue
+            SUM(oi.subtotal) as total_revenue
           FROM order_items oi
           JOIN orders o ON oi.order_id = o.id
+          JOIN products p ON oi.product_id = p.id
           WHERE o.status != 'cancelado'
-          GROUP BY oi.product_name
+          GROUP BY oi.product_id, p.name
           ORDER BY total_quantity DESC
           LIMIT 10
         `
