@@ -10,6 +10,7 @@ const { testConnection, initializeDatabase, closePool } = require('./database/co
 const { logger, httpLogger, logError } = require('./config/logger');
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
+const cartRoutes = require('./routes/cartRoutes');
 
 /**
  * Configuração e inicialização do servidor Express
@@ -51,6 +52,7 @@ class Server {
     
     this.app.use('/auth', limiter);
     this.app.use('/products', limiter);
+    this.app.use('/cart', limiter);
     
     // CORS - permite requisições de diferentes origens
     const allowedOrigins = process.env.ALLOWED_ORIGINS 
@@ -115,6 +117,9 @@ class Server {
     // Rotas de produtos
     this.app.use('/products', productRoutes);
 
+    // Rotas do carrinho
+    this.app.use('/cart', cartRoutes);
+
     // Rota para 404 - não encontrado
     this.app.use('*', (req, res) => {
       logger.warn(`Rota não encontrada: ${req.method} ${req.originalUrl}`, {
@@ -142,6 +147,14 @@ class Server {
             'PUT /products/:id': 'Atualizar produto (requer admin)',
             'DELETE /products/:id': 'Remover produto (requer admin)',
             'PATCH /products/:id/stock': 'Atualizar estoque (requer admin)'
+          },
+          cart: {
+            'GET /cart': 'Obter carrinho (requer autenticação)',
+            'GET /cart/count': 'Contar itens do carrinho (requer autenticação)',
+            'POST /cart': 'Adicionar item ao carrinho (requer autenticação)',
+            'PUT /cart/:productId': 'Atualizar quantidade (requer autenticação)',
+            'DELETE /cart/:productId': 'Remover item (requer autenticação)',
+            'DELETE /cart': 'Limpar carrinho (requer autenticação)'
           },
           general: {
             'GET /health': 'Health check da API'
@@ -218,6 +231,7 @@ class Server {
         console.log(`🏥 Health check: http://localhost:${this.port}/health`);
         console.log(`🔐 Rotas de auth: http://localhost:${this.port}/auth/*`);
         console.log(`📦 Rotas de produtos: http://localhost:${this.port}/products/*`);
+        console.log(`🛒 Rotas de carrinho: http://localhost:${this.port}/cart/*`);
         
         if (process.env.NODE_ENV === 'development') {
           console.log('\n📚 Documentação das rotas:');
@@ -235,6 +249,13 @@ class Server {
           console.log('    PUT /products/:id - Atualizar produto (requer admin)');
           console.log('    DELETE /products/:id - Remover produto (requer admin)');
           console.log('    PATCH /products/:id/stock - Atualizar estoque (requer admin)');
+          console.log('  CARRINHO:');
+          console.log('    GET /cart - Obter carrinho (requer token)');
+          console.log('    GET /cart/count - Contar itens (requer token)');
+          console.log('    POST /cart - Adicionar item (requer token)');
+          console.log('    PUT /cart/:productId - Atualizar quantidade (requer token)');
+          console.log('    DELETE /cart/:productId - Remover item (requer token)');
+          console.log('    DELETE /cart - Limpar carrinho (requer token)');
         }
       });
 
