@@ -12,6 +12,7 @@ const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const orderRoutes = require('./routes/orderRoutes');
+const orderItemRoutes = require('./routes/orderItemRoutes');
 
 /**
  * Configuração e inicialização do servidor Express
@@ -55,6 +56,7 @@ class Server {
     this.app.use('/products', limiter);
     this.app.use('/cart', limiter);
     this.app.use('/orders', limiter);
+    this.app.use('/order-items', limiter);
     
     // CORS - permite requisições de diferentes origens
     const allowedOrigins = process.env.ALLOWED_ORIGINS 
@@ -100,7 +102,7 @@ class Server {
         message: 'API Oceanica Pescados',
         timestamp: new Date().toISOString(),
         environment: process.env.NODE_ENV || 'development',
-        version: process.env.npm_package_version || '1.0.0',
+        version: process.env.VERSAO || '1.0.0',
         uptime: process.uptime(),
         memory: process.memoryUsage()
       };
@@ -124,6 +126,9 @@ class Server {
 
     // Rotas de pedidos
     this.app.use('/orders', orderRoutes);
+
+    // Rotas de itens de pedidos
+    this.app.use('/order-items', orderItemRoutes);
 
     // Rota para 404 - não encontrado
     this.app.use('*', (req, res) => {
@@ -169,6 +174,17 @@ class Server {
             'GET /orders': 'Listar todos os pedidos (requer admin)',
             'GET /orders/statistics': 'Estatísticas de pedidos (requer admin)',
             'PATCH /orders/:id/status': 'Atualizar status do pedido (requer admin)'
+          },
+          orderItems: {
+            'POST /order-items': 'Criar itens de pedido (requer autenticação)',
+            'GET /order-items/order/:orderId': 'Listar itens de um pedido (requer autenticação)',
+            'GET /order-items/:id': 'Buscar item por ID (requer autenticação)',
+            'PUT /order-items/:id/quantity': 'Atualizar quantidade (requer autenticação)',
+            'DELETE /order-items/:id': 'Remover item (requer autenticação)',
+            'DELETE /order-items/order/:orderId': 'Remover todos os itens (requer autenticação)',
+            'GET /order-items/order/:orderId/total': 'Calcular totais (requer autenticação)',
+            'GET /order-items/product/:productId': 'Itens por produto (requer admin)',
+            'GET /order-items/statistics/sales': 'Estatísticas de vendas (requer admin)'
           },
           general: {
             'GET /health': 'Health check da API'
@@ -247,6 +263,7 @@ class Server {
         console.log(`Rotas de produtos: http://localhost:${this.port}/products/*`);
         console.log(`Rotas de carrinho: http://localhost:${this.port}/cart/*`);
         console.log(`Rotas de pedidos: http://localhost:${this.port}/orders/*`);
+        console.log(`Rotas de itens de pedidos: http://localhost:${this.port}/order-items/*`);
         
         if (process.env.NODE_ENV === 'development') {
           console.log('\nDocumentação das rotas:');
@@ -279,6 +296,16 @@ class Server {
           console.log('    GET /orders - Todos os pedidos (requer admin)');
           console.log('    GET /orders/statistics - Estatísticas (requer admin)');
           console.log('    PATCH /orders/:id/status - Atualizar status (requer admin)');
+          console.log('  ITENS DE PEDIDOS:');
+          console.log('    POST /order-items - Criar itens (requer token)');
+          console.log('    GET /order-items/order/:orderId - Listar itens (requer token)');
+          console.log('    GET /order-items/:id - Buscar item (requer token)');
+          console.log('    PUT /order-items/:id/quantity - Atualizar quantidade (requer token)');
+          console.log('    DELETE /order-items/:id - Remover item (requer token)');
+          console.log('    DELETE /order-items/order/:orderId - Remover todos (requer token)');
+          console.log('    GET /order-items/order/:orderId/total - Calcular totais (requer token)');
+          console.log('    GET /order-items/product/:productId - Por produto (requer admin)');
+          console.log('    GET /order-items/statistics/sales - Estatísticas (requer admin)');
         }
       });
 
