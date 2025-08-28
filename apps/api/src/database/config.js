@@ -119,13 +119,27 @@ const initializeDatabase = async () => {
     // Criar tabela de itens dos pedidos
     await client.query(`
       CREATE TABLE IF NOT EXISTS order_items (
-        id UUID PRIMARY KEY DEFAULT ${uuidFunction},
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-        product_id UUID NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
-        product_name VARCHAR(255) NOT NULL,
-        product_price NUMERIC(10,2) NOT NULL CHECK (product_price > 0),
-        quantity INT NOT NULL CHECK (quantity > 0),
-        total_price NUMERIC(10,2) NOT NULL CHECK (total_price >= 0),
+        product_id UUID NOT NULL REFERENCES products(id),
+        quantity INTEGER NOT NULL CHECK (quantity > 0),
+        price DECIMAL(10,2) NOT NULL CHECK (price > 0),
+        subtotal DECIMAL(10,2) NOT NULL CHECK (subtotal > 0),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Criar tabela de enderecos
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS public.addresses (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+        street VARCHAR(255) NOT NULL,
+        city VARCHAR(100) NOT NULL,
+        state VARCHAR(50) NOT NULL,
+        postal_code VARCHAR(20) NOT NULL,
+        number VARCHAR(20),
+        complement VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -207,6 +221,7 @@ const initializeDatabase = async () => {
     console.log('  - Tabela cart_items criada/verificada');
     console.log('  - Tabela orders criada/verificada');
     console.log('  - Tabela order_items criada/verificada');
+    console.log('  - Tabela address criada/verificada');
     console.log('  - Índices criados/verificados');
     console.log('  - Foreign keys e constraints aplicados');
     

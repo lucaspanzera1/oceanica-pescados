@@ -13,6 +13,7 @@ const productRoutes = require('./routes/productRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const orderItemRoutes = require('./routes/orderItemRoutes');
+const addressRoutes = require('./routes/addressRoutes');
 
 /**
  * Configuração e inicialização do servidor Express
@@ -57,6 +58,7 @@ class Server {
     this.app.use('/cart', limiter);
     this.app.use('/orders', limiter);
     this.app.use('/order-items', limiter);
+    this.app.use('/addresses', limiter);
     
     // CORS - permite requisições de diferentes origens
     const allowedOrigins = process.env.ALLOWED_ORIGINS 
@@ -130,6 +132,9 @@ class Server {
     // Rotas de itens de pedidos
     this.app.use('/order-items', orderItemRoutes);
 
+    // Rotas de endereços
+    this.app.use('/addresses', addressRoutes);
+
     // Rota para 404 - não encontrado
     this.app.use('*', (req, res) => {
       logger.warn(`Rota não encontrada: ${req.method} ${req.originalUrl}`, {
@@ -185,6 +190,15 @@ class Server {
             'GET /order-items/order/:orderId/total': 'Calcular totais (requer autenticação)',
             'GET /order-items/product/:productId': 'Itens por produto (requer admin)',
             'GET /order-items/statistics/sales': 'Estatísticas de vendas (requer admin)'
+          },
+          addresses: {
+            'POST /addresses': 'Criar endereço (requer autenticação)',
+            'GET /addresses': 'Listar endereços (requer autenticação)',
+            'GET /addresses/my': 'Listar meus endereços (requer autenticação)',
+            'GET /addresses/:id': 'Buscar endereço por ID (requer autenticação)',
+            'PUT /addresses/:id': 'Atualizar endereço (requer autenticação)',
+            'DELETE /addresses/:id': 'Remover endereço (requer autenticação)',
+            'GET /addresses/statistics': 'Estatísticas de endereços (requer admin)'
           },
           general: {
             'GET /health': 'Health check da API'
@@ -264,6 +278,7 @@ class Server {
         console.log(`Rotas de carrinho: http://localhost:${this.port}/cart/*`);
         console.log(`Rotas de pedidos: http://localhost:${this.port}/orders/*`);
         console.log(`Rotas de itens de pedidos: http://localhost:${this.port}/order-items/*`);
+        console.log(`Rotas de endereços: http://localhost:${this.port}/addresses/*`);
         
         if (process.env.NODE_ENV === 'development') {
           console.log('\nDocumentação das rotas:');
@@ -306,6 +321,14 @@ class Server {
           console.log('    GET /order-items/order/:orderId/total - Calcular totais (requer token)');
           console.log('    GET /order-items/product/:productId - Por produto (requer admin)');
           console.log('    GET /order-items/statistics/sales - Estatísticas (requer admin)');
+          console.log('  ENDEREÇOS:');
+          console.log('    POST /addresses - Criar endereço (requer token)');
+          console.log('    GET /addresses - Listar endereços (requer token)');
+          console.log('    GET /addresses/my - Meus endereços (requer token)');
+          console.log('    GET /addresses/:id - Buscar endereço (requer token)');
+          console.log('    PUT /addresses/:id - Atualizar endereço (requer token)');
+          console.log('    DELETE /addresses/:id - Remover endereço (requer token)');
+          console.log('    GET /addresses/statistics - Estatísticas (requer admin)');
         }
       });
 
