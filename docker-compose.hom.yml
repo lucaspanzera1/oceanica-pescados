@@ -1,0 +1,31 @@
+version: '3.9'
+
+services:
+  api:
+    build: ./apps/api
+    container_name: oceanicapescados-api
+    ports:
+      - "30002:30002"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgres://postgres:postgres123@postgres:5432/db
+    env_file:
+      - ./apps/api/.env
+    restart: unless-stopped
+    networks:
+      - github_default
+
+  web:
+    build: ./apps/web
+    container_name: oceanicapescados-web
+    ports:
+      - "5173:80"   # Acessa no localhost:8080
+    restart: unless-stopped
+    networks:
+      - github_default
+
+networks:
+  github_default:
+    external: true
+
+
