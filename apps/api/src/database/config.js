@@ -103,6 +103,33 @@ const initializeDatabase = async () => {
       )
     `);
 
+    // Criar tabela de pedidos
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS orders (
+        id UUID PRIMARY KEY DEFAULT ${uuidFunction},
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        status VARCHAR(50) DEFAULT 'pendente' CHECK (status IN ('pendente', 'confirmado', 'enviado', 'cancelado')),
+        shipping_price NUMERIC(10,2) DEFAULT 0 CHECK (shipping_price >= 0),
+        total_price NUMERIC(10,2) NOT NULL CHECK (total_price >= 0),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Criar tabela de itens dos pedidos
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS order_items (
+        id UUID PRIMARY KEY DEFAULT ${uuidFunction},
+        order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+        product_id UUID NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
+        product_name VARCHAR(255) NOT NULL,
+        product_price NUMERIC(10,2) NOT NULL CHECK (product_price > 0),
+        quantity INT NOT NULL CHECK (quantity > 0),
+        total_price NUMERIC(10,2) NOT NULL CHECK (total_price >= 0),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // Criar índices para melhor performance
     
     // Índices da tabela users
@@ -144,10 +171,42 @@ const initializeDatabase = async () => {
       CREATE INDEX IF NOT EXISTS idx_cart_items_created_at ON cart_items(created_at)
     `);
 
+    // Índices da tabela orders
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id)
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at)
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_orders_user_status ON orders(user_id, status)
+    `);
+
+    // Índices da tabela order_items
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id)
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_order_items_product_id ON order_items(product_id)
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_order_items_created_at ON order_items(created_at)
+    `);
+
     console.log('✅ Tabelas do banco de dados inicializadas!');
     console.log('  - Tabela users criada/verificada');
     console.log('  - Tabela products criada/verificada');
     console.log('  - Tabela cart_items criada/verificada');
+    console.log('  - Tabela orders criada/verificada');
+    console.log('  - Tabela order_items criada/verificada');
     console.log('  - Índices criados/verificados');
     console.log('  - Foreign keys e constraints aplicados');
     

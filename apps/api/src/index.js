@@ -11,6 +11,7 @@ const { logger, httpLogger, logError } = require('./config/logger');
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const cartRoutes = require('./routes/cartRoutes');
+const orderRoutes = require('./routes/orderRoutes');
 
 /**
  * Configuração e inicialização do servidor Express
@@ -53,6 +54,7 @@ class Server {
     this.app.use('/auth', limiter);
     this.app.use('/products', limiter);
     this.app.use('/cart', limiter);
+    this.app.use('/orders', limiter);
     
     // CORS - permite requisições de diferentes origens
     const allowedOrigins = process.env.ALLOWED_ORIGINS 
@@ -120,6 +122,9 @@ class Server {
     // Rotas do carrinho
     this.app.use('/cart', cartRoutes);
 
+    // Rotas de pedidos
+    this.app.use('/orders', orderRoutes);
+
     // Rota para 404 - não encontrado
     this.app.use('*', (req, res) => {
       logger.warn(`Rota não encontrada: ${req.method} ${req.originalUrl}`, {
@@ -155,6 +160,15 @@ class Server {
             'PUT /cart/:productId': 'Atualizar quantidade (requer autenticação)',
             'DELETE /cart/:productId': 'Remover item (requer autenticação)',
             'DELETE /cart': 'Limpar carrinho (requer autenticação)'
+          },
+          orders: {
+            'POST /orders': 'Criar pedido (requer autenticação)',
+            'GET /orders/my': 'Listar meus pedidos (requer autenticação)',
+            'GET /orders/:id': 'Buscar pedido por ID (requer autenticação)',
+            'PATCH /orders/:id/cancel': 'Cancelar pedido (requer autenticação)',
+            'GET /orders': 'Listar todos os pedidos (requer admin)',
+            'GET /orders/statistics': 'Estatísticas de pedidos (requer admin)',
+            'PATCH /orders/:id/status': 'Atualizar status do pedido (requer admin)'
           },
           general: {
             'GET /health': 'Health check da API'
@@ -211,7 +225,7 @@ class Server {
    */
   async start() {
     try {
-      logger.info('🚀 Iniciando servidor...');
+      logger.info('Iniciando servidor...');
       
       // Testa conexão com o banco
       await testConnection();
@@ -221,20 +235,21 @@ class Server {
       
       // Inicia o servidor
       const server = this.app.listen(this.port, '0.0.0.0', () => {
-        logger.info(`✅ Servidor rodando na porta ${this.port}`, {
+        logger.info(`Servidor rodando na porta ${this.port}`, {
           environment: process.env.NODE_ENV,
           port: this.port,
           pid: process.pid
         });
         
-        console.log(`🌐 URL local: http://localhost:${this.port}`);
-        console.log(`🏥 Health check: http://localhost:${this.port}/health`);
-        console.log(`🔐 Rotas de auth: http://localhost:${this.port}/auth/*`);
-        console.log(`📦 Rotas de produtos: http://localhost:${this.port}/products/*`);
-        console.log(`🛒 Rotas de carrinho: http://localhost:${this.port}/cart/*`);
+        console.log(`URL local: http://localhost:${this.port}`);
+        console.log(`Health check: http://localhost:${this.port}/health`);
+        console.log(`Rotas de auth: http://localhost:${this.port}/auth/*`);
+        console.log(`Rotas de produtos: http://localhost:${this.port}/products/*`);
+        console.log(`Rotas de carrinho: http://localhost:${this.port}/cart/*`);
+        console.log(`Rotas de pedidos: http://localhost:${this.port}/orders/*`);
         
         if (process.env.NODE_ENV === 'development') {
-          console.log('\n📚 Documentação das rotas:');
+          console.log('\nDocumentação das rotas:');
           console.log('  AUTH:');
           console.log('    POST /auth/register - Registrar usuário');
           console.log('    POST /auth/login - Fazer login');
@@ -256,6 +271,14 @@ class Server {
           console.log('    PUT /cart/:productId - Atualizar quantidade (requer token)');
           console.log('    DELETE /cart/:productId - Remover item (requer token)');
           console.log('    DELETE /cart - Limpar carrinho (requer token)');
+          console.log('  PEDIDOS:');
+          console.log('    POST /orders - Criar pedido (requer token)');
+          console.log('    GET /orders/my - Meus pedidos (requer token)');
+          console.log('    GET /orders/:id - Buscar pedido (requer token)');
+          console.log('    PATCH /orders/:id/cancel - Cancelar pedido (requer token)');
+          console.log('    GET /orders - Todos os pedidos (requer admin)');
+          console.log('    GET /orders/statistics - Estatísticas (requer admin)');
+          console.log('    PATCH /orders/:id/status - Atualizar status (requer admin)');
         }
       });
 
@@ -263,7 +286,7 @@ class Server {
       this.setupGracefulShutdown(server);
 
     } catch (error) {
-      logger.error('❌ Erro ao iniciar o servidor', { error: error.message, stack: error.stack });
+      logger.error('Erro ao iniciar o servidor', { error: error.message, stack: error.stack });
       process.exit(1);
     }
   }
@@ -273,24 +296,24 @@ class Server {
    */
   setupGracefulShutdown(server) {
     const gracefulShutdown = (signal) => {
-      logger.info(`🔶 ${signal} recebido, encerrando servidor graciosamente...`);
+      logger.info(`${signal} recebido, encerrando servidor graciosamente...`);
       
       server.close(async () => {
-        logger.info('🔒 Servidor HTTP fechado');
+        logger.info('Servidor HTTP fechado');
         
         try {
           await closePool();
-          logger.info('✅ Shutdown gracioso concluído');
+          logger.info('Shutdown gracioso concluído');
           process.exit(0);
         } catch (error) {
-          logger.error('❌ Erro durante shutdown', { error: error.message });
+          logger.error('Erro durante shutdown', { error: error.message });
           process.exit(1);
         }
       });
       
       // Force close após 10 segundos
       setTimeout(() => {
-        logger.error('⚠️ Forçando encerramento após timeout');
+        logger.error('Forçando encerramento após timeout');
         process.exit(1);
       }, 10000);
     };
