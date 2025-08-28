@@ -83,3 +83,12 @@ CREATE TABLE IF NOT EXISTS public.orders (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+CREATE TABLE order_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    product_id UUID NOT NULL REFERENCES products(id),
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
+    price DECIMAL(10,2) NOT NULL CHECK (price > 0),
+    subtotal DECIMAL(10,2) NOT NULL CHECK (subtotal > 0),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
