@@ -9,9 +9,8 @@ export const Register: React.FC = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   
-  const { isAuthenticated } = useAuth();
+  const { register, loading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   // Se já estiver autenticado, redireciona para o dashboard
@@ -56,36 +55,16 @@ export const Register: React.FC = () => {
       return;
     }
 
-    setLoading(true);
-
     try {
-      const response = await fetch('/api/auth/register/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          role: 'cliente'
-        }),
-      });
-
-      if (response.ok) {
-        // Registro bem-sucedido, redireciona para login
-        navigate('/login', { 
-          state: { 
-            message: 'Conta criada com sucesso! Faça login para continuar.' 
-          } 
-        });
+      const success = await register(email, password);
+      
+      if (success) {
+        navigate('/dashboard');
       } else {
-        const errorData = await response.json();
-        setError(errorData.message || 'Erro ao criar conta. Tente novamente.');
+        setError('Erro ao criar conta. Email pode já estar em uso.');
       }
     } catch (err) {
-      setError('Erro de conexão. Verifique sua internet e tente novamente.');
-    } finally {
-      setLoading(false);
+      setError('Erro ao criar conta. Tente novamente.');
     }
   };
 
