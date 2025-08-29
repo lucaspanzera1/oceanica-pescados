@@ -5,11 +5,13 @@ import { useAuth } from '../../context/AuthContext';
 interface PublicRouteProps {
   children: React.ReactNode;
   redirectTo?: string;
+  restrictWhenAuthenticated?: boolean; // Nova prop
 }
 
 export const PublicRoute: React.FC<PublicRouteProps> = ({ 
   children, 
-  redirectTo = '/dashboard' 
+  redirectTo = '/',
+  restrictWhenAuthenticated = false // Por padrão, não restringe
 }) => {
   const { isAuthenticated, loading } = useAuth();
 
@@ -24,7 +26,8 @@ export const PublicRoute: React.FC<PublicRouteProps> = ({
     );
   }
 
-  if (isAuthenticated) {
+  // Só redireciona se estiver configurado para restringir usuários logados
+  if (isAuthenticated && restrictWhenAuthenticated) {
     return <Navigate to={redirectTo} replace />;
   }
 

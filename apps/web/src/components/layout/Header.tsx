@@ -5,13 +5,14 @@ import {
   Menu, 
   X, 
   Phone, 
-  MapPin, 
+  MapPin,
   User,
   LogOut,
   ShoppingCart,
   Fish,
   Waves
 } from 'lucide-react';
+
 
 export const Header: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -73,25 +74,43 @@ export const Header: React.FC = () => {
                   className="flex items-center space-x-2 hover:text-blue-200 transition-colors"
                 >
                   <User className="h-3 w-3" />
-                  <span className="hidden sm:inline">{user?.email}</span>
+                  <span className="hidden sm:inline text-xs">
+                    Olá, {user?.email?.split('@')[0] || 'Usuário'}
+                  </span>
                 </button>
                 
                 {isUserMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 z-50 border">
+                    <div className="px-4 py-2 text-xs text-gray-500 border-b border-gray-100">
+                      <div className="font-medium text-gray-900">{user?.email}</div>
+                      <div className="capitalize">{user?.role}</div>
+                    </div>
+                    
                     <Link 
                       to="/dashboard" 
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                     >
-                      <User className="h-4 w-4 mr-2" />
-                      Dashboard
+                      <User className="h-4 w-4 mr-3" />
+                      Minha Área
                     </Link>
-                    <button
-                      onClick={handleLogout}
-                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    
+                    <Link 
+                      to="/perfil" 
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                     >
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Sair
-                    </button>
+                      <User className="h-4 w-4 mr-3" />
+                      Meu Perfil
+                    </Link>
+                    
+                    <div className="border-t border-gray-100 mt-1">
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center w-full px-4 py-2 text-sm text-red-700 hover:bg-red-50 transition-colors"
+                      >
+                        <LogOut className="h-4 w-4 mr-3" />
+                        Sair
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -99,7 +118,7 @@ export const Header: React.FC = () => {
               <div className="flex items-center space-x-4">
                 <Link 
                   to="/login" 
-                  className="hover:text-blue-200 transition-colors"
+                  className="text-xs hover:text-blue-200 transition-colors px-3 py-1 rounded-md border border-white/20 hover:border-white/40"
                 >
                   Entrar
                 </Link>
@@ -118,18 +137,7 @@ export const Header: React.FC = () => {
             
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-3 group">
-              <div className="relative">
-                <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-lg blur opacity-25 group-hover:opacity-75 transition duration-300"></div>
-                <div className="relative bg-gradient-to-br from-blue-600 to-cyan-500 p-2 rounded-lg">
-                  <Fish className="h-8 w-8 text-white" />
-                </div>
-              </div>
-              <div className="hidden sm:block">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
-                  Sistema
-                </h1>
-                <p className="text-xs text-gray-500 -mt-1">Pescados & Frutos do Mar</p>
-              </div>
+              <img src="logo_oceanica.fw_.webp" alt="Logo" width="100px" />
             </Link>
 
             {/* Desktop Navigation */}
