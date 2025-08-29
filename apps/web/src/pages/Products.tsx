@@ -105,17 +105,39 @@ export const Products: React.FC = () => {
                 {state.products.map((product) => (
                   <div
                     key={product.id}
-                    className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
+                    className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden group"
                   >
-                    <div className="aspect-w-1 aspect-h-1 w-full h-48 bg-gray-200">
+                    <div className="aspect-w-1 aspect-h-1 w-full h-48 bg-gray-200 relative overflow-hidden">
+                      {/* Primeira imagem */}
                       <img
                         src={product.image_url}
                         alt={product.name}
-                        className="w-full h-full object-cover"
+                        className={`w-full h-full object-cover transition-opacity duration-500 ease-in-out ${
+                          product.image_url1 ? 'group-hover:opacity-0' : ''
+                        }`}
                         onError={(e) => {
                           e.currentTarget.src = 'https://via.placeholder.com/300x200?text=Sem+Imagem';
                         }}
                       />
+                      
+                      {/* Segunda imagem (se existir) */}
+                      {product.image_url1 && (
+                        <img
+                          src={product.image_url1}
+                          alt={`${product.name} - Vista alternativa`}
+                          className="absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-500 ease-in-out opacity-0 group-hover:opacity-100"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      )}
+                      
+                      {/* Indicador de múltiplas imagens */}
+                      {product.image_url1 && (
+                        <div className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          2 fotos
+                        </div>
+                      )}
                     </div>
                     
                     <div className="p-4">
