@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS public.products (
     price NUMERIC(10,2) NOT NULL,
     stock INT DEFAULT 0,
     image_url TEXT,
+    image_url1 TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
