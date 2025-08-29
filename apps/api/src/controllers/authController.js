@@ -51,15 +51,16 @@ class AuthController {
       }
 
       // Cria o usuário
-      const user = await authService.createUser(email, password, userRole);
+      const { user, token } = await authService.createUser(email, password, userRole);
 
-      res.status(201).json({
-        success: true,
-        message: 'Usuário criado com sucesso',
-        data: {
-          user
-        }
-      });
+res.status(201).json({
+  success: true,
+  message: 'Usuário criado com sucesso',
+  data: {
+    token,
+    user
+  }
+});
 
     } catch (error) {
       console.error('Erro no registro:', error.message);
