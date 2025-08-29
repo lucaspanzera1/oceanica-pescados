@@ -2,8 +2,11 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, Button } from '../components/ui';
 
+import { Layout } from '../components/layout/Layout';
+
 export const Home: React.FC = () => {
   return (
+    <Layout>
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <Card className="max-w-md w-full text-center">
         <div className="space-y-6">
@@ -31,5 +34,6 @@ export const Home: React.FC = () => {
         </div>
       </Card>
     </div>
+    </Layout>
   );
 };

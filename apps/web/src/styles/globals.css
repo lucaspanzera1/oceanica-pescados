@@ -1,10 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   html {
-    font-family: system-ui, sans-serif;
+    font-family: 'DM Sans', sans-serif;
   }
 }
 
@@ -12,4 +14,14 @@
   .loading-spinner {
     @apply animate-spin rounded-full border-b-2 border-current;
   }
+}
+
+:root {
+  --oceanic-blue: #1e3a8a;
+  --oceanic-cyan: #0891b2;
+  --oceanic-green: #059669;
+}
+
+.oceanic-gradient {
+  background: linear-gradient(135deg, var(--oceanic-blue), var(--oceanic-cyan));
 }
