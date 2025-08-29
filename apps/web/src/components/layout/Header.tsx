@@ -10,8 +10,11 @@ import {
   LogOut,
   ShoppingCart,
   Fish,
-  Waves
+  Waves,
+  Facebook,
+  Instagram
 } from 'lucide-react';
+
 
 
 export const Header: React.FC = () => {
@@ -52,81 +55,108 @@ export const Header: React.FC = () => {
 
   return (
     <>
-      {/* Top Bar - Informações de Contato */}
-      <div className="bg-blue-900 text-white text-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between py-2 space-y-1 sm:space-y-0">
-            <div className="flex items-center space-x-6">
-              <div className="flex items-center space-x-1">
-                <Phone className="h-3 w-3" />
-                <span>(31) 3428-8312</span>
-              </div>
-              <div className="hidden sm:flex items-center space-x-1">
-                <MapPin className="h-3 w-3" />
-                <span>Belo Horizonte, MG</span>
-              </div>
-            </div>
-            
-            {isAuthenticated ? (
-              <div className="relative">
-                <button
-                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center space-x-2 hover:text-blue-200 transition-colors"
-                >
-                  <User className="h-3 w-3" />
-                  <span className="hidden sm:inline text-xs">
-                    Olá, {user?.email?.split('@')[0] || 'Usuário'}
-                  </span>
-                </button>
+{/* Top Bar - Informações de Contato */}
+<div className="bg-blue-900 text-white text-sm">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="flex flex-col sm:flex-row items-center justify-between py-2 space-y-2 sm:space-y-0">
+
+      {/* 📞 Contatos (só no desktop) */}
+      <div className="hidden sm:flex items-center space-x-6">
+        <div className="flex items-center space-x-1">
+          <Phone className="h-3 w-3" />
+          <span>(31) 3428-8312</span>
+        </div>
+        <div className="flex items-center space-x-1">
+          <MapPin className="h-3 w-3" />
+          <span>Belo Horizonte, MG</span>
+        </div>
+      </div>
+
+      {/* 🔗 Redes sociais + Entrar/Usuário */}
+      <div className="flex items-center space-x-4">
+
+        {/* Redes sociais (sempre visíveis) */}
+        <div className="flex items-center space-x-3">
+          <a 
+            href="https://www.facebook.com/oceanicapescados/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="hover:text-blue-400 transition-colors"
+          >
+            <Facebook className="h-4 w-4" />
+          </a>
+          <a 
+            href="https://www.instagram.com/oceanicapescados/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="hover:text-pink-400 transition-colors"
+          >
+            <Instagram className="h-4 w-4" />
+          </a>
+        </div>
+
+        {/* Login / Usuário */}
+        {isAuthenticated ? (
+          <div className="relative">
+            <button
+              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+              className="flex items-center space-x-2 hover:text-blue-200 transition-colors"
+            >
+              <User className="h-3 w-3" />
+              {/* nome aparece só em desktop */}
+              <span className="hidden sm:inline text-xs">
+                Olá, {user?.email?.split('@')[0] || 'Usuário'}
+              </span>
+            </button>
+
+            {isUserMenuOpen && (
+              <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 z-50 border">
+                <div className="px-4 py-2 text-xs text-gray-500 border-b border-gray-100">
+                  <div className="font-medium text-gray-900">{user?.email}</div>
+                  <div className="capitalize">{user?.role}</div>
+                </div>
                 
-                {isUserMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 z-50 border">
-                    <div className="px-4 py-2 text-xs text-gray-500 border-b border-gray-100">
-                      <div className="font-medium text-gray-900">{user?.email}</div>
-                      <div className="capitalize">{user?.role}</div>
-                    </div>
-                    
-                    <Link 
-                      to="/dashboard" 
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                    >
-                      <User className="h-4 w-4 mr-3" />
-                      Minha Área
-                    </Link>
-                    
-                    <Link 
-                      to="/perfil" 
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                    >
-                      <User className="h-4 w-4 mr-3" />
-                      Meu Perfil
-                    </Link>
-                    
-                    <div className="border-t border-gray-100 mt-1">
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center w-full px-4 py-2 text-sm text-red-700 hover:bg-red-50 transition-colors"
-                      >
-                        <LogOut className="h-4 w-4 mr-3" />
-                        Sair
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="flex items-center space-x-4">
                 <Link 
-                  to="/login" 
-                  className="text-xs hover:text-blue-200 transition-colors px-3 py-1 rounded-md border border-white/20 hover:border-white/40"
+                  to="/dashboard" 
+                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                 >
-                  Entrar
+                  <User className="h-4 w-4 mr-3" />
+                  Minha Área
                 </Link>
+                
+                <Link 
+                  to="/perfil" 
+                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <User className="h-4 w-4 mr-3" />
+                  Meu Perfil
+                </Link>
+                
+                <div className="border-t border-gray-100 mt-1">
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center w-full px-4 py-2 text-sm text-red-700 hover:bg-red-50 transition-colors"
+                  >
+                    <LogOut className="h-4 w-4 mr-3" />
+                    Sair
+                  </button>
+                </div>
               </div>
             )}
           </div>
-        </div>
+        ) : (
+          <Link 
+            to="/login" 
+            className="text-xs hover:text-blue-200 transition-colors px-3 py-1 rounded-md border border-white/20 hover:border-white/40"
+          >
+            Entrar
+          </Link>
+        )}
       </div>
+    </div>
+  </div>
+</div>
+
 
       {/* Main Header */}
       <header className={`bg-white shadow-lg transition-all duration-300 sticky top-0 z-40 ${
