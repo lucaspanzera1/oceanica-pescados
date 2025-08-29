@@ -9,6 +9,7 @@ import { Home } from './pages/Home';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
+import { Products } from './pages/Products';
 
 export const AppRouter: React.FC = () => {
   return (
@@ -21,6 +22,15 @@ export const AppRouter: React.FC = () => {
             element={
               <PublicRoute restrictWhenAuthenticated={false}>
                 <Home />
+              </PublicRoute>
+            }
+          />
+          {/* Outras rotas públicas */}
+          <Route
+            path="/produtos"
+            element={
+              <PublicRoute>
+                <Products />
               </PublicRoute>
             }
           />
@@ -43,8 +53,7 @@ export const AppRouter: React.FC = () => {
               </PublicRoute>
             }
           />
-          
-
+        
           {/* Rota protegida - dashboard (somente para logados) */}
           <Route
             path="/dashboard"
@@ -52,27 +61,6 @@ export const AppRouter: React.FC = () => {
               <ProtectedRoute>
                 <Dashboard />
               </ProtectedRoute>
-            }
-          />
-
-          {/* Outras rotas públicas */}
-          <Route
-            path="/produtos"
-            element={
-              <PublicRoute>
-                {/* Página de produtos - acessível por todos */}
-                <div>Produtos</div>
-              </PublicRoute>
-            }
-          />
-
-          <Route
-            path="/sobre"
-            element={
-              <PublicRoute>
-                {/* Página sobre - acessível por todos */}
-                <div>Sobre Nós</div>
-              </PublicRoute>
             }
           />
 

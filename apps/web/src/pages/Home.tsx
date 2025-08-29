@@ -4,10 +4,15 @@ import { Layout } from '../components/layout/Layout';
 
 export const Home: React.FC = () => {
   return (
-    <Layout>
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <img src="frutosdomar.jpg" alt="banner" />
-    </div>
-    </Layout>
+<Layout>
+  <div className="relative min-h-screen w-full">
+    <img 
+      src="frutosdomar.jpg" 
+      alt="banner" 
+      className="absolute inset-0 w-full h-full object-cover"
+    />
+  </div>
+</Layout>
+
   );
 };

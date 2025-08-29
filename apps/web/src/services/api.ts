@@ -1,3 +1,6 @@
+import { API_ENDPOINTS } from '../utils/constants';
+import { ProductsResponse } from '../types/product';
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 class ApiService {
@@ -55,7 +58,11 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+  // Método específico para buscar produtos
+  async getProducts(page: number = 1, limit: number = 10): Promise<ProductsResponse> {
+    return this.get<ProductsResponse>(`${API_ENDPOINTS.PRODUCTS}?page=${page}&limit=${limit}`);
+  }
 }
 
 export const apiService = new ApiService(API_BASE_URL);
-
