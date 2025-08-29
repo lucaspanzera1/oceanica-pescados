@@ -7,6 +7,7 @@ import { PublicRoute } from './components/common/PublicRoute';
 // Pages
 import { Home } from './pages/Home';
 import { Login } from './pages/Login';
+import { Register } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
 
 export const AppRouter: React.FC = () => {
@@ -33,6 +34,16 @@ export const AppRouter: React.FC = () => {
               </PublicRoute>
             }
           />
+          {/* Rota pública - register (restrita para usuários logados) */}
+          <Route
+            path="/register"
+            element={
+              <PublicRoute restrictWhenAuthenticated={true} redirectTo="/">
+                <Register />
+              </PublicRoute>
+            }
+          />
+          
 
           {/* Rota protegida - dashboard (somente para logados) */}
           <Route
