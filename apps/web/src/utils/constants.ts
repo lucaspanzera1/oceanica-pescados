@@ -10,6 +10,7 @@ export const ROUTES = {
   DASHBOARD: '/dashboard',
   PRODUCTS: '/products',
   PRODUCT_DETAIL: '/products/:id',
+  CART: '/cart',
 } as const;
 
 export const STORAGE_KEYS = {

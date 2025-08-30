@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { useCart } from '../../context/CartContext';
 import { 
   Menu, 
   X, 
@@ -15,13 +16,12 @@ import {
   Instagram
 } from 'lucide-react';
 
-
-
 export const Header: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const { user, logout, isAuthenticated } = useAuth();
+  const { totalItems } = useCart();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -46,6 +46,10 @@ export const Header: React.FC = () => {
     navigate('/');
   };
 
+  const handleCartClick = () => {
+    navigate('/cart');
+  };
+
   const navigation = [
     { name: 'Início', href: '/', current: location.pathname === '/' },
     { name: 'Produtos', href: '/produtos', current: location.pathname === '/produtos' },
@@ -55,108 +59,107 @@ export const Header: React.FC = () => {
 
   return (
     <>
-{/* Top Bar - Informações de Contato */}
-<div className="bg-blue-900 text-white text-sm">
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div className="flex flex-col sm:flex-row items-center justify-between py-2 space-y-2 sm:space-y-0">
+      {/* Top Bar - Informações de Contato */}
+      <div className="bg-blue-900 text-white text-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between py-2 space-y-2 sm:space-y-0">
 
-      {/* 📞 Contatos (só no desktop) */}
-      <div className="hidden sm:flex items-center space-x-6">
-        <div className="flex items-center space-x-1">
-          <Phone className="h-3 w-3" />
-          <span>(31) 3428-8312</span>
-        </div>
-        <div className="flex items-center space-x-1">
-          <MapPin className="h-3 w-3" />
-          <span>Belo Horizonte, MG</span>
-        </div>
-      </div>
-
-      {/* 🔗 Redes sociais + Entrar/Usuário */}
-      <div className="flex items-center space-x-4">
-
-        {/* Redes sociais (sempre visíveis) */}
-        <div className="flex items-center space-x-3">
-          <a 
-            href="https://www.facebook.com/oceanicapescados/" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="hover:text-blue-400 transition-colors"
-          >
-            <Facebook className="h-4 w-4" />
-          </a>
-          <a 
-            href="https://www.instagram.com/oceanicapescados/" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="hover:text-pink-400 transition-colors"
-          >
-            <Instagram className="h-4 w-4" />
-          </a>
-        </div>
-
-        {/* Login / Usuário */}
-        {isAuthenticated ? (
-          <div className="relative">
-            <button
-              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-              className="flex items-center space-x-2 hover:text-blue-200 transition-colors"
-            >
-              <User className="h-3 w-3" />
-              {/* nome aparece só em desktop */}
-              <span className="hidden sm:inline text-xs">
-                Olá, {user?.email?.split('@')[0] || 'Usuário'}
-              </span>
-            </button>
-
-            {isUserMenuOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 z-50 border">
-                <div className="px-4 py-2 text-xs text-gray-500 border-b border-gray-100">
-                  <div className="font-medium text-gray-900">{user?.email}</div>
-                  <div className="capitalize">{user?.role}</div>
-                </div>
-                
-                <Link 
-                  to="/dashboard" 
-                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  <User className="h-4 w-4 mr-3" />
-                  Minha Área
-                </Link>
-                
-                <Link 
-                  to="/perfil" 
-                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  <User className="h-4 w-4 mr-3" />
-                  Meu Perfil
-                </Link>
-                
-                <div className="border-t border-gray-100 mt-1">
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center w-full px-4 py-2 text-sm text-red-700 hover:bg-red-50 transition-colors"
-                  >
-                    <LogOut className="h-4 w-4 mr-3" />
-                    Sair
-                  </button>
-                </div>
+            {/* 📞 Contatos (só no desktop) */}
+            <div className="hidden sm:flex items-center space-x-6">
+              <div className="flex items-center space-x-1">
+                <Phone className="h-3 w-3" />
+                <span>(31) 3428-8312</span>
               </div>
-            )}
-          </div>
-        ) : (
-          <Link 
-            to="/login" 
-            className="text-xs hover:text-blue-200 transition-colors px-3 py-1 rounded-md border border-white/20 hover:border-white/40"
-          >
-            Entrar
-          </Link>
-        )}
-      </div>
-    </div>
-  </div>
-</div>
+              <div className="flex items-center space-x-1">
+                <MapPin className="h-3 w-3" />
+                <span>Belo Horizonte, MG</span>
+              </div>
+            </div>
 
+            {/* 🔗 Redes sociais + Entrar/Usuário */}
+            <div className="flex items-center space-x-4">
+
+              {/* Redes sociais (sempre visíveis) */}
+              <div className="flex items-center space-x-3">
+                <a 
+                  href="https://www.facebook.com/oceanicapescados/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="hover:text-blue-400 transition-colors"
+                >
+                  <Facebook className="h-4 w-4" />
+                </a>
+                <a 
+                  href="https://www.instagram.com/oceanicapescados/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="hover:text-pink-400 transition-colors"
+                >
+                  <Instagram className="h-4 w-4" />
+                </a>
+              </div>
+
+              {/* Login / Usuário */}
+              {isAuthenticated ? (
+                <div className="relative">
+                  <button
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    className="flex items-center space-x-2 hover:text-blue-200 transition-colors"
+                  >
+                    <User className="h-3 w-3" />
+                    {/* nome aparece só em desktop */}
+                    <span className="hidden sm:inline text-xs">
+                      Olá, {user?.email?.split('@')[0] || 'Usuário'}
+                    </span>
+                  </button>
+
+                  {isUserMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 z-50 border">
+                      <div className="px-4 py-2 text-xs text-gray-500 border-b border-gray-100">
+                        <div className="font-medium text-gray-900">{user?.email}</div>
+                        <div className="capitalize">{user?.role}</div>
+                      </div>
+                      
+                      <Link 
+                        to="/dashboard" 
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <User className="h-4 w-4 mr-3" />
+                        Minha Área
+                      </Link>
+                      
+                      <Link 
+                        to="/perfil" 
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <User className="h-4 w-4 mr-3" />
+                        Meu Perfil
+                      </Link>
+                      
+                      <div className="border-t border-gray-100 mt-1">
+                        <button
+                          onClick={handleLogout}
+                          className="flex items-center w-full px-4 py-2 text-sm text-red-700 hover:bg-red-50 transition-colors"
+                        >
+                          <LogOut className="h-4 w-4 mr-3" />
+                          Sair
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link 
+                  to="/login" 
+                  className="text-xs hover:text-blue-200 transition-colors px-3 py-1 rounded-md border border-white/20 hover:border-white/40"
+                >
+                  Entrar
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Main Header */}
       <header className={`bg-white shadow-lg transition-all duration-300 sticky top-0 z-40 ${
@@ -205,12 +208,23 @@ export const Header: React.FC = () => {
                 <span>WhatsApp</span>
               </a>
 
-              {/* Cart Button */}
-              <button className="relative p-2 text-gray-700 hover:text-blue-600 transition-colors">
+              {/* Cart Button - FUNCIONAL AGORA */}
+              <button 
+                onClick={handleCartClick}
+                className="relative p-2 text-gray-700 hover:text-blue-600 transition-colors duration-200 hover:bg-gray-50 rounded-lg"
+                title="Ver carrinho"
+              >
                 <ShoppingCart className="h-6 w-6" />
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  0
-                </span>
+                {totalItems > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center min-w-[1.25rem] animate-pulse">
+                    {totalItems > 99 ? '99+' : totalItems}
+                  </span>
+                )}
+                {totalItems === 0 && (
+                  <span className="absolute -top-1 -right-1 bg-gray-300 text-gray-600 text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    0
+                  </span>
+                )}
               </button>
 
               {/* Mobile menu button */}
@@ -244,6 +258,20 @@ export const Header: React.FC = () => {
                     {item.name}
                   </Link>
                 ))}
+
+                {/* Mobile Cart Button */}
+                <button
+                  onClick={handleCartClick}
+                  className="flex items-center space-x-2 px-3 py-2 w-full text-left text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors text-sm font-medium rounded-lg"
+                >
+                  <ShoppingCart className="h-4 w-4" />
+                  <span>Carrinho ({totalItems})</span>
+                  {totalItems > 0 && (
+                    <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                      {totalItems}
+                    </span>
+                  )}
+                </button>
                 
                 {/* Mobile WhatsApp */}
                 <a

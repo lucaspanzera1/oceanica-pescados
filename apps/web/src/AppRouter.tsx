@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { CartProvider } from './context/CartContext';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { PublicRoute } from './components/common/PublicRoute';
 
@@ -11,11 +12,13 @@ import { Register } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
 import { Products } from './pages/Products';
 import { ProductDetail } from './pages/ProductDetail';
+import { Cart } from './pages/Cart';
 
 export const AppRouter: React.FC = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <CartProvider>
         <Routes>
           {/* Rota pública - página inicial (sempre acessível) */}
           <Route
@@ -40,6 +43,14 @@ export const AppRouter: React.FC = () => {
             element={
               <PublicRoute>
                 <ProductDetail />
+              </PublicRoute>
+            }
+          />
+                              <Route
+            path="/cart"
+            element={
+              <PublicRoute>
+                <Cart />
               </PublicRoute>
             }
           />
@@ -76,6 +87,7 @@ export const AppRouter: React.FC = () => {
           {/* Redireciona rotas não encontradas para home */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </CartProvider>
       </AuthProvider>
     </BrowserRouter>
   );

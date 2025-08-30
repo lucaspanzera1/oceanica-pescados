@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout/Layout';
 import { apiService } from '../services/api';
 import { Product, Pagination } from '../types/product';
+import { useCart } from '../context/CartContext';
 
 interface ProductsState {
   products: Product[];
@@ -13,6 +14,7 @@ interface ProductsState {
 
 export const Products: React.FC = () => {
   const navigate = useNavigate();
+  const { addItem } = useCart();
   const [state, setState] = useState<ProductsState>({
     products: [],
     pagination: null,
@@ -49,6 +51,14 @@ export const Products: React.FC = () => {
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
+  };
+
+  const handleAddToCart = (product: Product, e: React.MouseEvent) => {
+    e.stopPropagation(); // Evita que o clique do botão navegue para a página de detalhes
+    if (product.stock > 0) {
+      addItem(product, 1);
+      alert(`${product.name} adicionado ao carrinho!`);
+    }
   };
 
   const handleProductClick = (productId: string) => {
@@ -172,14 +182,7 @@ export const Products: React.FC = () => {
                       
                       <button
                         disabled={product.stock === 0}
-                        onClick={(e) => {
-                          e.stopPropagation(); // Evita que o clique do botão navegue para a página de detalhes
-                          if (product.stock > 0) {
-                            // Aqui você pode implementar a lógica de adicionar ao carrinho
-                            console.log(`Adicionando ${product.name} ao carrinho`);
-                            alert(`${product.name} adicionado ao carrinho!`);
-                          }
-                        }}
+                        onClick={(e) => handleAddToCart(product, e)}
                         className={`w-full py-2 px-4 rounded-lg transition-colors ${
                           product.stock > 0
                             ? 'bg-blue-600 hover:bg-blue-700 text-white'

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout/Layout';
 import { apiService } from '../services/api';
 import { Product } from '../types/product';
+import { useCart } from '../context/CartContext';
 
 interface ProductDetailState {
   product: Product | null;
@@ -13,6 +14,7 @@ interface ProductDetailState {
 export const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { addItem } = useCart();
   
   const [state, setState] = useState<ProductDetailState>({
     product: null,
@@ -86,9 +88,10 @@ export const ProductDetail: React.FC = () => {
   };
 
   const handleAddToCart = () => {
-    // Aqui você implementaria a lógica de adicionar ao carrinho
-    console.log(`Adicionando ${quantity} unidade(s) do produto ${state.product?.name} ao carrinho`);
-    alert(`${quantity} unidade(s) de ${state.product?.name} adicionada(s) ao carrinho!`);
+    if (state.product) {
+      addItem(state.product, quantity);
+      alert(`${quantity} unidade(s) de ${state.product.name} adicionada(s) ao carrinho!`);
+    }
   };
 
   if (state.loading) {
