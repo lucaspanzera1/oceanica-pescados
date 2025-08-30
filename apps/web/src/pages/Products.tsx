@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout/Layout';
 import { apiService } from '../services/api';
 import { Product, Pagination } from '../types/product';
@@ -11,6 +12,7 @@ interface ProductsState {
 }
 
 export const Products: React.FC = () => {
+  const navigate = useNavigate();
   const [state, setState] = useState<ProductsState>({
     products: [],
     pagination: null,
@@ -47,6 +49,10 @@ export const Products: React.FC = () => {
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
+  };
+
+  const handleProductClick = (productId: string) => {
+    navigate(`/produtos/${productId}`);
   };
 
   const formatPrice = (price: string) => {
@@ -105,7 +111,8 @@ export const Products: React.FC = () => {
                 {state.products.map((product) => (
                   <div
                     key={product.id}
-                    className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden group"
+                    className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden group cursor-pointer"
+                    onClick={() => handleProductClick(product.id)}
                   >
                     <div className="aspect-w-1 aspect-h-1 w-full h-48 bg-gray-200 relative overflow-hidden">
                       {/* Primeira imagem */}
@@ -165,6 +172,14 @@ export const Products: React.FC = () => {
                       
                       <button
                         disabled={product.stock === 0}
+                        onClick={(e) => {
+                          e.stopPropagation(); // Evita que o clique do botão navegue para a página de detalhes
+                          if (product.stock > 0) {
+                            // Aqui você pode implementar a lógica de adicionar ao carrinho
+                            console.log(`Adicionando ${product.name} ao carrinho`);
+                            alert(`${product.name} adicionado ao carrinho!`);
+                          }
+                        }}
                         className={`w-full py-2 px-4 rounded-lg transition-colors ${
                           product.stock > 0
                             ? 'bg-blue-600 hover:bg-blue-700 text-white'

@@ -10,6 +10,7 @@ import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
 import { Products } from './pages/Products';
+import { ProductDetail } from './pages/ProductDetail';
 
 export const AppRouter: React.FC = () => {
   return (
@@ -31,6 +32,14 @@ export const AppRouter: React.FC = () => {
             element={
               <PublicRoute>
                 <Products />
+              </PublicRoute>
+            }
+          />
+                    <Route
+            path="/produtos/:id"
+            element={
+              <PublicRoute>
+                <ProductDetail />
               </PublicRoute>
             }
           />
