@@ -4,6 +4,7 @@ import { Layout } from '../components/layout/Layout';
 import { apiService } from '../services/api';
 import { Product } from '../types/product';
 import { useCart } from '../context/CartContext';
+import { useToast } from '../context/ToastContext';
 
 interface ProductDetailState {
   product: Product | null;
@@ -15,6 +16,7 @@ export const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addItem } = useCart();
+  const { success, error } = useToast();
   
   const [state, setState] = useState<ProductDetailState>({
     product: null,
@@ -89,8 +91,15 @@ export const ProductDetail: React.FC = () => {
 
   const handleAddToCart = () => {
     if (state.product) {
-      addItem(state.product, quantity);
-      alert(`${quantity} unidade(s) de ${state.product.name} adicionada(s) ao carrinho!`);
+      try {
+        addItem(state.product, quantity);
+        success(
+          'Produtos adicionados ao carrinho!',
+          `${quantity} unidade${quantity > 1 ? 's' : ''} de ${state.product.name}`
+        );
+      } catch (err) {
+        error('Erro ao adicionar ao carrinho', 'Tente novamente mais tarde');
+      }
     }
   };
 

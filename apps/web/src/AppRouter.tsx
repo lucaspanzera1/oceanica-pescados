@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
+import { ToastProvider } from './context/ToastContext';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { PublicRoute } from './components/common/PublicRoute';
 
@@ -14,10 +15,14 @@ import { Products } from './pages/Products';
 import { ProductDetail } from './pages/ProductDetail';
 import { Cart } from './pages/Cart';
 
+
+import { ToastContainer } from './components/ToastContainer';
+
 export const AppRouter: React.FC = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <ToastProvider>
         <CartProvider>
         <Routes>
           {/* Rota pública - página inicial (sempre acessível) */}
@@ -87,7 +92,10 @@ export const AppRouter: React.FC = () => {
           {/* Redireciona rotas não encontradas para home */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+
+         <ToastContainer />
         </CartProvider>
+        </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
   );

@@ -2,11 +2,13 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout/Layout';
 import { useCart } from '../context/CartContext';
+import { useToast } from '../context/ToastContext';
 import { Trash2, Plus, Minus, ShoppingBag } from 'lucide-react';
 
 export const Cart: React.FC = () => {
   const navigate = useNavigate();
   const { items, totalItems, totalPrice, updateQuantity, removeItem, clearCart } = useCart();
+  const { success, info, warning } = useToast();
 
   const formatPrice = (price: number | string) => {
     const numPrice = typeof price === 'string' ? parseFloat(price) : price;
@@ -16,16 +18,38 @@ export const Cart: React.FC = () => {
     }).format(numPrice);
   };
 
-  const handleQuantityChange = (id: string, currentQuantity: number, change: number, maxStock: number) => {
+  const handleQuantityChange = (id: string, currentQuantity: number, change: number, maxStock: number, productName: string) => {
     const newQuantity = currentQuantity + change;
     if (newQuantity > 0 && newQuantity <= maxStock) {
       updateQuantity(id, newQuantity);
+      if (change > 0) {
+        info('Quantidade aumentada', `${productName} - ${newQuantity} unidade${newQuantity > 1 ? 's' : ''}`);
+      } else {
+        info('Quantidade diminuída', `${productName} - ${newQuantity} unidade${newQuantity > 1 ? 's' : ''}`);
+      }
+    } else if (newQuantity > maxStock) {
+      warning('Estoque limitado', `Apenas ${maxStock} unidade${maxStock > 1 ? 's' : ''} disponível${maxStock > 1 ? 's' : ''}`);
+    }
+  };
+
+  const handleRemoveItem = (id: string, productName: string) => {
+    removeItem(id);
+    success('Produto removido', `${productName} foi removido do carrinho`);
+  };
+
+  const handleClearCart = () => {
+    if (items.length > 0) {
+      clearCart();
+      success('Carrinho limpo', 'Todos os produtos foram removidos do carrinho');
     }
   };
 
   const handleCheckout = () => {
     // Aqui você implementaria a lógica de checkout
-    alert(`Finalizar compra de ${totalItems} item(s) por ${formatPrice(totalPrice)}`);
+    success(
+      'Pedido confirmado!',
+      `Finalizar compra de ${totalItems} item${totalItems > 1 ? 's' : ''} por ${formatPrice(totalPrice)}`
+    );
   };
 
   if (items.length === 0) {
@@ -112,7 +136,7 @@ export const Cart: React.FC = () => {
                     {/* Controles de quantidade */}
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={() => handleQuantityChange(item.id, item.quantity, -1, item.stock)}
+                        onClick={() => handleQuantityChange(item.id, item.quantity, -1, item.stock, item.name)}
                         disabled={item.quantity <= 1}
                         className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
@@ -124,7 +148,7 @@ export const Cart: React.FC = () => {
                       </span>
                       
                       <button
-                        onClick={() => handleQuantityChange(item.id, item.quantity, 1, item.stock)}
+                        onClick={() => handleQuantityChange(item.id, item.quantity, 1, item.stock, item.name)}
                         disabled={item.quantity >= item.stock}
                         className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
@@ -138,7 +162,7 @@ export const Cart: React.FC = () => {
                         {formatPrice(parseFloat(item.price) * item.quantity)}
                       </span>
                       <button
-                        onClick={() => removeItem(item.id)}
+                        onClick={() => handleRemoveItem(item.id, item.name)}
                         className="text-red-500 hover:text-red-700 transition-colors"
                         title="Remover item"
                       >
@@ -152,7 +176,7 @@ export const Cart: React.FC = () => {
               {/* Botão limpar carrinho */}
               <div className="flex justify-end">
                 <button
-                  onClick={clearCart}
+                  onClick={handleClearCart}
                   className="text-red-600 hover:text-red-800 font-medium transition-colors"
                 >
                   Limpar Carrinho
