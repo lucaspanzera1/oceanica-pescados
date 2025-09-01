@@ -4,6 +4,7 @@ import { Layout } from '../components/layout/Layout';
 import { apiService } from '../services/api';
 import { Product } from '../types/product';
 import { useCart } from '../context/CartContext';
+import { useToast } from '../context/ToastContext';
 
 interface ProductDetailState {
   product: Product | null;
@@ -15,6 +16,7 @@ export const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { success, error } = useToast();
   
   const [state, setState] = useState<ProductDetailState>({
     product: null,
@@ -86,17 +88,27 @@ export const ProductDetail: React.FC = () => {
       setQuantity(newQuantity);
     }
   };
-
-  const handleAddToCart = async () => {
-    if (state.product) {
-      try {
-        await addToCart(state.product.id, quantity);
-        alert(`${quantity} unidade(s) de ${state.product.name} adicionada(s) ao carrinho!`);
-      } catch (error) {
-        alert('Erro ao adicionar produto ao carrinho. Tente novamente.');
-      }
+  
+const handleAddToCart = async () => {
+  if (state.product) {
+    try {
+      await addToCart(state.product.id, quantity);
+      
+      success(
+        'Produtos adicionados ao carrinho!',
+        `${quantity} unidade${quantity > 1 ? 's' : ''} de ${state.product.name}`
+      );
+      
+    } catch (error) {
+      console.error('Erro ao adicionar ao carrinho:', error);
+    
+      error(
+        'Erro ao adicionar ao carrinho', 
+        'Tente novamente mais tarde'
+      );
     }
-  };
+  }
+};
 
   if (state.loading) {
     return (
