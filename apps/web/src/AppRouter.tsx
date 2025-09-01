@@ -34,7 +34,7 @@ export const AppRouter: React.FC = () => {
               </PublicRoute>
             }
           />
-          {/* Outras rotas públicas */}
+          {/* Outras rotas públicas 
           <Route
             path="/produtos"
             element={
@@ -43,6 +43,7 @@ export const AppRouter: React.FC = () => {
               </PublicRoute>
             }
           />
+          */}
                     <Route
             path="/produtos/:id"
             element={

@@ -50,9 +50,34 @@ export const Header: React.FC = () => {
     navigate('/cart');
   };
 
+  const handleGoToProducts = () => {
+    if (location.pathname !== "/") {
+      // Se não estiver na página inicial, navegar primeiro
+      navigate("/");
+      // Aguardar a navegação e depois fazer scroll
+      setTimeout(() => {
+        const element = document.getElementById("produtos");
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 100);
+    } else {
+      // Se já estiver na página inicial, fazer scroll diretamente
+      const element = document.getElementById("produtos");
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  };
+
   const navigation = [
     { name: 'Início', href: '/', current: location.pathname === '/' },
-    { name: 'Produtos', href: '/produtos', current: location.pathname === '/produtos' },
+    { 
+      name: 'Produtos', 
+      href: '#produtos', 
+      onClick: handleGoToProducts,
+      current: false 
+    },
     { name: 'Sobre Nós', href: '/sobre', current: location.pathname === '/sobre' },
     { name: 'Contato', href: '/contato', current: location.pathname === '/contato' },
   ];
@@ -175,22 +200,43 @@ export const Header: React.FC = () => {
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-8">
-              {navigation.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`relative px-3 py-2 text-sm font-medium transition-colors duration-200 ${
-                    item.current
-                      ? 'text-blue-600'
-                      : 'text-gray-700 hover:text-blue-600'
-                  }`}
-                >
-                  {item.name}
-                  {item.current && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-500"></div>
-                  )}
-                </Link>
-              ))}
+              {navigation.map((item) => {
+                if (item.onClick) {
+                  return (
+                    <button
+                      key={item.name}
+                      onClick={item.onClick}
+                      className={`relative px-3 py-2 text-sm font-medium transition-colors duration-200 ${
+                        item.current
+                          ? 'text-blue-600'
+                          : 'text-gray-700 hover:text-blue-600'
+                      }`}
+                    >
+                      {item.name}
+                      {item.current && (
+                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-500"></div>
+                      )}
+                    </button>
+                  );
+                }
+                
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className={`relative px-3 py-2 text-sm font-medium transition-colors duration-200 ${
+                      item.current
+                        ? 'text-blue-600'
+                        : 'text-gray-700 hover:text-blue-600'
+                    }`}
+                  >
+                    {item.name}
+                    {item.current && (
+                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-500"></div>
+                    )}
+                  </Link>
+                );
+              })}
             </nav>
 
             {/* Action Buttons */}
@@ -245,19 +291,37 @@ export const Header: React.FC = () => {
           {isMobileMenuOpen && (
             <div className="md:hidden border-t border-gray-200">
               <div className="py-4 space-y-2">
-                {navigation.map((item) => (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    className={`block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      item.current
-                        ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600'
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'
-                    }`}
-                  >
-                    {item.name}
-                  </Link>
-                ))}
+                {navigation.map((item) => {
+                  if (item.onClick) {
+                    return (
+                      <button
+                        key={item.name}
+                        onClick={item.onClick}
+                        className={`block w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          item.current
+                            ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600'
+                            : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'
+                        }`}
+                      >
+                        {item.name}
+                      </button>
+                    );
+                  }
+
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      className={`block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        item.current
+                          ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600'
+                          : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'
+                      }`}
+                    >
+                      {item.name}
+                    </Link>
+                  );
+                })}
 
                 {/* Mobile Cart Button */}
                 <button

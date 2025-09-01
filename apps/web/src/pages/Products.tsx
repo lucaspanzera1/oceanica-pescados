@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Layout } from '../components/layout/Layout';
 import { apiService } from '../services/api';
 import { Product, Pagination } from '../types/product';
 import { useCart } from '../context/CartContext';
@@ -94,18 +93,15 @@ export const Products: React.FC = () => {
 
   if (state.loading) {
     return (
-      <Layout>
-        <div className="min-h-screen flex items-center justify-center">
+        <div className="min-h-auto flex items-center justify-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
         </div>
-      </Layout>
     );
   }
 
   if (state.error) {
     return (
-      <Layout>
-        <div className="min-h-screen flex items-center justify-center">
+        <div className="min-h-auto flex items-center justify-center">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-red-600 mb-4">Erro ao carregar produtos</h2>
             <p className="text-gray-600 mb-4">{state.error}</p>
@@ -117,13 +113,11 @@ export const Products: React.FC = () => {
             </button>
           </div>
         </div>
-      </Layout>
     );
   }
 
   return (
-    <Layout>
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-auto bg-gray-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">Nossos Produtos</h1>
@@ -259,6 +253,5 @@ export const Products: React.FC = () => {
           )}
         </div>
       </div>
-    </Layout>
   );
 };
