@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout/Layout';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
+import { useOrders } from '../context/OrderContext';
 import { Trash2, Plus, Minus, ShoppingBag, AlertCircle, Loader } from 'lucide-react';
 
 export const Cart: React.FC = () => {
@@ -10,10 +11,14 @@ export const Cart: React.FC = () => {
   const { cart, loading, error, updateQuantity, removeItem, clearCart } = useCart();
   const { success, error: showError } = useToast();
   
+  const { createOrder } = useOrders();
+  const [creatingOrder, setCreatingOrder] = useState(false);
+
   // Estados para controlar loading de ações individuais
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
   const [removingItems, setRemovingItems] = useState<Set<string>>(new Set());
   const [clearingCart, setClearingCart] = useState(false);
+
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -105,19 +110,38 @@ export const Cart: React.FC = () => {
     }
   };
 
-  const handleCheckout = () => {
-    if (!cart) return;
+const handleCheckout = async () => {
+  if (!cart) return;
+  
+  setCreatingOrder(true);
+  
+  try {
+    const shippingPrice = 15.50; // Valor fixo do frete
+    const newOrder = await createOrder(shippingPrice);
     
     success(
-      'Redirecionando para checkout...',
-      `${cart.summary.totalItems} item(s) - ${formatPrice(cart.summary.totalAmount)}`
+      'Pedido criado com sucesso!',
+      `Pedido #${newOrder.id.slice(0, 8)} criado por ${formatPrice(newOrder.total_price)}`
     );
     
-    // Simular redirecionamento para checkout
+    // Limpar o carrinho após criar o pedido
+    await clearCart();
+    
+    // Redirecionar para a página de pedidos após 2 segundos
     setTimeout(() => {
-      alert(`Checkout: ${cart.summary.totalItems} item(s) por ${formatPrice(cart.summary.totalAmount)}`);
-    }, 1500);
-  };
+      navigate('/orders');
+    }, 2000);
+    
+  } catch (error) {
+    console.error('Erro ao criar pedido:', error);
+    showError(
+      'Erro ao criar pedido',
+      'Tente novamente mais tarde'
+    );
+  } finally {
+    setCreatingOrder(false);
+  }
+};
 
   if (loading) {
     return (
@@ -359,9 +383,21 @@ export const Cart: React.FC = () => {
 
                 <button
                   onClick={handleCheckout}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors mb-3"
+                  disabled={creatingOrder}
+                  className={`w-full font-semibold py-3 px-4 rounded-lg transition-colors mb-3 ${
+                    creatingOrder 
+                      ? 'bg-gray-400 cursor-not-allowed text-white' 
+                      : 'bg-green-600 hover:bg-green-700 text-white'
+                  }`}
                 >
-                  Finalizar Compra
+                  {creatingOrder ? (
+                    <div className="flex items-center justify-center space-x-2">
+                      <Loader className="h-5 w-5 animate-spin" />
+                      <span>Criando Pedido...</span>
+                    </div>
+                  ) : (
+                    'Finalizar Compra'
+                  )}
                 </button>
                 
                 <button

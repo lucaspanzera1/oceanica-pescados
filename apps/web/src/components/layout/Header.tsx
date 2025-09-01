@@ -11,6 +11,7 @@ import {
   LogOut,
   ShoppingCart,
   Fish,
+  Package,
   Waves,
   Facebook,
   Instagram
@@ -159,6 +160,14 @@ export const Header: React.FC = () => {
                       >
                         <User className="h-4 w-4 mr-3" />
                         Meu Perfil
+                      </Link>
+
+                                            <Link
+                        to="/orders"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 flex items-center space-x-2"
+                      >
+                        <Package className="h-4 w-4" />
+                        <span>Meus Pedidos</span>
                       </Link>
                       
                       <div className="border-t border-gray-100 mt-1">

@@ -80,17 +80,16 @@ class ApiService {
     });
   }
 
-  // Método específico para buscar produtos
+  // ============ MÉTODOS DE PRODUTOS ============
   async getProducts(page: number = 1, limit: number = 10): Promise<ProductsResponse> {
     return this.get<ProductsResponse>(`${API_ENDPOINTS.PRODUCTS}?page=${page}&limit=${limit}`);
   }
 
-  // Método específico para buscar produto por ID
   async getProductById(id: string): Promise<ProductResponse> {
     return this.get<ProductResponse>(`${API_ENDPOINTS.PRODUCTS}/${id}`);
   }
 
-  // Métodos do carrinho
+  // ============ MÉTODOS DO CARRINHO ============
   async getCart(): Promise<CartResponse> {
     return this.get<CartResponse>(API_ENDPOINTS.CART);
   }
@@ -99,39 +98,54 @@ class ApiService {
     return this.post<AddToCartResponse>(API_ENDPOINTS.CART, data);
   }
 
-  // Atualizar quantidade de um item específico no carrinho
   async updateCartItem(productId: string, quantity: number): Promise<AddToCartResponse> {
     const endpoint = `${API_ENDPOINTS.CART}/${productId}`;
     console.log(`Atualizando produto no carrinho: ${productId} com quantidade: ${quantity}`);
     return this.put<AddToCartResponse>(endpoint, { quantity });
   }
 
-  // Remover um item específico do carrinho
   async removeCartItem(productId: string): Promise<AddToCartResponse> {
     const endpoint = `${API_ENDPOINTS.CART}/${productId}`;
     console.log(`Removendo produto do carrinho: ${productId}`);
     return this.delete<AddToCartResponse>(endpoint);
   }
 
-  // Limpar todo o carrinho
   async clearCart(): Promise<AddToCartResponse> {
     return this.delete<AddToCartResponse>(API_ENDPOINTS.CART);
   }
 
-  // Método para buscar pedidos do usuário
-async getOrders(page: number = 1, limit: number = 10): Promise<OrdersResponse> {
-  return this.get<OrdersResponse>(`${API_ENDPOINTS.ORDERS}?page=${page}&limit=${limit}`);
-}
+  // ============ MÉTODOS DE PEDIDOS ============
+  
+  /**
+   * Busca todos os pedidos do usuário autenticado
+   * @param page Página atual (padrão: 1)
+   * @param limit Itens por página (padrão: 10)
+   */
+  async getOrders(page: number = 1, limit: number = 10): Promise<OrdersResponse> {
+    const endpoint = `${API_ENDPOINTS.ORDERS}?page=${page}&limit=${limit}`;
+    console.log(`Buscando pedidos - página ${page}, limite ${limit}`);
+    return this.get<OrdersResponse>(endpoint);
+  }
 
-// Método para criar um novo pedido
-async createOrder(data: CreateOrderRequest): Promise<CreateOrderResponse> {
-  return this.post<CreateOrderResponse>(API_ENDPOINTS.ORDERS, data);
-}
+  /**
+   * Cria um novo pedido com os itens do carrinho atual
+   * @param data Dados do pedido (preço do frete)
+   */
+  async createOrder(data: CreateOrderRequest): Promise<CreateOrderResponse> {
+    console.log('Criando novo pedido:', data);
+    // Note: O endpoint para criar pedido é POST /orders, não /orders/my
+    return this.post<CreateOrderResponse>('/orders', data);
+  }
 
-// Método para buscar um pedido específico por ID (opcional)
-async getOrderById(id: string): Promise<CreateOrderResponse> {
-  return this.get<CreateOrderResponse>(`${API_ENDPOINTS.ORDERS}/${id}`);
-}
+  /**
+   * Busca um pedido específico por ID
+   * @param id ID do pedido
+   */
+  async getOrderById(id: string): Promise<CreateOrderResponse> {
+    const endpoint = `/orders/${id}`;
+    console.log(`Buscando pedido por ID: ${id}`);
+    return this.get<CreateOrderResponse>(endpoint);
+  }
 }
 
 export const apiService = new ApiService(API_BASE_URL);
