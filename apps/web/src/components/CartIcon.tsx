@@ -5,7 +5,9 @@ import { useCart } from '../context/CartContext';
 
 export const CartIcon: React.FC = () => {
   const navigate = useNavigate();
-  const { totalItems } = useCart();
+  const { cart } = useCart();
+
+  const totalItems = cart?.summary.totalItems || 0;
 
   const handleCartClick = () => {
     navigate('/cart');

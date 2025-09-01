@@ -1,221 +1,162 @@
-import React, { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
-import { Product } from '../types/product';
-
-export interface CartItem extends Product {
-  quantity: number;
-}
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { apiService } from '../services/api';
+import { Cart, CartItem, AddToCartRequest } from '../types/cart';
 
 interface CartState {
-  items: CartItem[];
-  totalItems: number;
-  totalPrice: number;
+  cart: Cart | null;
+  loading: boolean;
+  error: string | null;
 }
 
-type CartAction =
-  | { type: 'ADD_ITEM'; payload: { product: Product; quantity: number } }
-  | { type: 'REMOVE_ITEM'; payload: string }
-  | { type: 'UPDATE_QUANTITY'; payload: { id: string; quantity: number } }
-  | { type: 'CLEAR_CART' }
-  | { type: 'LOAD_CART'; payload: CartState };
-
 interface CartContextType extends CartState {
-  addItem: (product: Product, quantity: number) => void;
-  removeItem: (id: string) => void;
-  updateQuantity: (id: string, quantity: number) => void;
-  clearCart: () => void;
+  addToCart: (productId: string, quantity: number) => Promise<void>;
+  updateQuantity: (itemId: string, quantity: number) => Promise<void>;
+  removeItem: (itemId: string) => Promise<void>;
+  clearCart: () => Promise<void>;
+  refreshCart: () => Promise<void>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
-
-// Chave para armazenar no localStorage
-const CART_STORAGE_KEY = 'shopping_cart';
-
-// Função para carregar o carrinho do localStorage
-const loadCartFromStorage = (): CartState => {
-  try {
-    const savedCart = localStorage.getItem(CART_STORAGE_KEY);
-    if (savedCart) {
-      const parsedCart = JSON.parse(savedCart);
-      // Valida se tem a estrutura esperada
-      if (parsedCart && Array.isArray(parsedCart.items)) {
-        return parsedCart;
-      }
-    }
-  } catch (error) {
-    console.error('Erro ao carregar carrinho do localStorage:', error);
-  }
-  
-  // Retorna estado inicial se não conseguir carregar
-  return {
-    items: [],
-    totalItems: 0,
-    totalPrice: 0
-  };
-};
-
-// Função para salvar o carrinho no localStorage
-const saveCartToStorage = (state: CartState): void => {
-  try {
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(state));
-  } catch (error) {
-    console.error('Erro ao salvar carrinho no localStorage:', error);
-  }
-};
-
-// Função para calcular totais
-const calculateTotals = (items: CartItem[]): { totalItems: number; totalPrice: number } => {
-  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-  const totalPrice = items.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
-  
-  return { totalItems, totalPrice };
-};
-
-const cartReducer = (state: CartState, action: CartAction): CartState => {
-  let newState: CartState;
-
-  switch (action.type) {
-    case 'LOAD_CART': {
-      return action.payload;
-    }
-
-    case 'ADD_ITEM': {
-      const { product, quantity } = action.payload;
-      const existingItemIndex = state.items.findIndex(item => item.id === product.id);
-      
-      if (existingItemIndex > -1) {
-        // Se o item já existe, atualiza a quantidade
-        const updatedItems = [...state.items];
-        const newQuantity = updatedItems[existingItemIndex].quantity + quantity;
-        
-        // Verifica se não excede o estoque
-        if (newQuantity <= product.stock) {
-          updatedItems[existingItemIndex].quantity = newQuantity;
-        } else {
-          updatedItems[existingItemIndex].quantity = product.stock;
-        }
-        
-        const totals = calculateTotals(updatedItems);
-        newState = {
-          ...state,
-          items: updatedItems,
-          ...totals
-        };
-      } else {
-        // Se é um novo item, adiciona ao carrinho
-        const newItem: CartItem = { ...product, quantity };
-        const updatedItems = [...state.items, newItem];
-        const totals = calculateTotals(updatedItems);
-        
-        newState = {
-          ...state,
-          items: updatedItems,
-          ...totals
-        };
-      }
-      break;
-    }
-    
-    case 'REMOVE_ITEM': {
-      const updatedItems = state.items.filter(item => item.id !== action.payload);
-      const totals = calculateTotals(updatedItems);
-      
-      newState = {
-        ...state,
-        items: updatedItems,
-        ...totals
-      };
-      break;
-    }
-    
-    case 'UPDATE_QUANTITY': {
-      const { id, quantity } = action.payload;
-      
-      if (quantity <= 0) {
-        // Se a quantidade for 0 ou menor, remove o item
-        return cartReducer(state, { type: 'REMOVE_ITEM', payload: id });
-      }
-      
-      const updatedItems = state.items.map(item => {
-        if (item.id === id) {
-          // Verifica se não excede o estoque
-          const newQuantity = quantity <= item.stock ? quantity : item.stock;
-          return { ...item, quantity: newQuantity };
-        }
-        return item;
-      });
-      
-      const totals = calculateTotals(updatedItems);
-      newState = {
-        ...state,
-        items: updatedItems,
-        ...totals
-      };
-      break;
-    }
-    
-    case 'CLEAR_CART': {
-      newState = {
-        items: [],
-        totalItems: 0,
-        totalPrice: 0
-      };
-      break;
-    }
-    
-    default:
-      return state;
-  }
-
-  // Salva no localStorage sempre que o estado muda
-  saveCartToStorage(newState);
-  return newState;
-};
-
-const initialState: CartState = {
-  items: [],
-  totalItems: 0,
-  totalPrice: 0
-};
 
 interface CartProviderProps {
   children: ReactNode;
 }
 
 export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
-  const [state, dispatch] = useReducer(cartReducer, initialState);
-  
-  // Carrega o carrinho do localStorage quando o componente monta
-  useEffect(() => {
-    const savedCart = loadCartFromStorage();
-    if (savedCart.items.length > 0) {
-      dispatch({ type: 'LOAD_CART', payload: savedCart });
+  const [state, setState] = useState<CartState>({
+    cart: null,
+    loading: true,
+    error: null
+  });
+
+  const fetchCart = async () => {
+    try {
+      setState(prev => ({ ...prev, loading: true, error: null }));
+      const response = await apiService.getCart();
+      setState(prev => ({
+        ...prev,
+        cart: response.data.cart,
+        loading: false
+      }));
+    } catch (error) {
+      // Se der erro 404 (carrinho vazio), não é um erro real
+      if (error instanceof Error && error.message.includes('404')) {
+        setState(prev => ({
+          ...prev,
+          cart: {
+            userId: '',
+            items: [],
+            summary: {
+              totalItems: 0,
+              totalAmount: 0,
+              itemCount: 0
+            }
+          },
+          loading: false,
+          error: null
+        }));
+      } else {
+        setState(prev => ({
+          ...prev,
+          error: error instanceof Error ? error.message : 'Erro ao carregar carrinho',
+          loading: false
+        }));
+      }
     }
+  };
+
+  const addToCart = async (productId: string, quantity: number) => {
+    try {
+      setState(prev => ({ ...prev, error: null }));
+      
+      const request: AddToCartRequest = { productId, quantity };
+      await apiService.addToCart(request);
+      
+      // Recarrega o carrinho após adicionar
+      await fetchCart();
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Erro ao adicionar produto ao carrinho'
+      }));
+      throw error;
+    }
+  };
+
+  const updateQuantity = async (itemId: string, quantity: number) => {
+    try {
+      setState(prev => ({ ...prev, error: null }));
+      
+      if (quantity <= 0) {
+        await removeItem(itemId);
+        return;
+      }
+      
+      await apiService.updateCartItem(itemId, quantity);
+      
+      // Recarrega o carrinho após atualizar
+      await fetchCart();
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Erro ao atualizar quantidade'
+      }));
+      throw error;
+    }
+  };
+
+  const removeItem = async (itemId: string) => {
+    try {
+      setState(prev => ({ ...prev, error: null }));
+      
+      await apiService.removeCartItem(itemId);
+      
+      // Recarrega o carrinho após remover
+      await fetchCart();
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Erro ao remover produto'
+      }));
+      throw error;
+    }
+  };
+
+  const clearCart = async () => {
+    try {
+      setState(prev => ({ ...prev, error: null }));
+      
+      await apiService.clearCart();
+      
+      // Recarrega o carrinho após limpar
+      await fetchCart();
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Erro ao limpar carrinho'
+      }));
+      throw error;
+    }
+  };
+
+  const refreshCart = async () => {
+    await fetchCart();
+  };
+
+  // Carrega o carrinho quando o componente é montado
+  useEffect(() => {
+    fetchCart();
   }, []);
-  
-  const addItem = (product: Product, quantity: number) => {
-    dispatch({ type: 'ADD_ITEM', payload: { product, quantity } });
-  };
-  
-  const removeItem = (id: string) => {
-    dispatch({ type: 'REMOVE_ITEM', payload: id });
-  };
-  
-  const updateQuantity = (id: string, quantity: number) => {
-    dispatch({ type: 'UPDATE_QUANTITY', payload: { id, quantity } });
-  };
-  
-  const clearCart = () => {
-    dispatch({ type: 'CLEAR_CART' });
-  };
-  
+
   return (
     <CartContext.Provider
       value={{
         ...state,
-        addItem,
-        removeItem,
+        addToCart,
         updateQuantity,
-        clearCart
+        removeItem,
+        clearCart,
+        refreshCart
       }}
     >
       {children}

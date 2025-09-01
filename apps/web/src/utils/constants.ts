@@ -2,6 +2,7 @@ export const API_ENDPOINTS = {
   LOGIN: '/auth/login',
   PROFILE: '/auth/profile',
   PRODUCTS: '/products',
+  CART: '/cart',
 } as const;
 
 export const ROUTES = {

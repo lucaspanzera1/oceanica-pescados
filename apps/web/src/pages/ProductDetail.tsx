@@ -4,7 +4,6 @@ import { Layout } from '../components/layout/Layout';
 import { apiService } from '../services/api';
 import { Product } from '../types/product';
 import { useCart } from '../context/CartContext';
-import { useToast } from '../context/ToastContext';
 
 interface ProductDetailState {
   product: Product | null;
@@ -15,8 +14,7 @@ interface ProductDetailState {
 export const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addItem } = useCart();
-  const { success, error } = useToast();
+  const { addToCart } = useCart();
   
   const [state, setState] = useState<ProductDetailState>({
     product: null,
@@ -89,16 +87,13 @@ export const ProductDetail: React.FC = () => {
     }
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (state.product) {
       try {
-        addItem(state.product, quantity);
-        success(
-          'Produtos adicionados ao carrinho!',
-          `${quantity} unidade${quantity > 1 ? 's' : ''} de ${state.product.name}`
-        );
-      } catch (err) {
-        error('Erro ao adicionar ao carrinho', 'Tente novamente mais tarde');
+        await addToCart(state.product.id, quantity);
+        alert(`${quantity} unidade(s) de ${state.product.name} adicionada(s) ao carrinho!`);
+      } catch (error) {
+        alert('Erro ao adicionar produto ao carrinho. Tente novamente.');
       }
     }
   };
@@ -283,6 +278,7 @@ export const ProductDetail: React.FC = () => {
                 <div className="space-y-3 pt-6 border-t">
                   <h3 className="font-semibold text-gray-900">Informações do Produto</h3>
                   <div className="text-sm text-gray-600 space-y-1">
+                    <p><strong>ID:</strong> {state.product.id}</p>
                     <p><strong>Criado em:</strong> {formatDate(state.product.created_at)}</p>
                     <p><strong>Última atualização:</strong> {formatDate(state.product.updated_at)}</p>
                   </div>

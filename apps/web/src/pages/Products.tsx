@@ -4,7 +4,6 @@ import { Layout } from '../components/layout/Layout';
 import { apiService } from '../services/api';
 import { Product, Pagination } from '../types/product';
 import { useCart } from '../context/CartContext';
-import { useToast } from '../context/ToastContext';
 
 interface ProductsState {
   products: Product[];
@@ -16,7 +15,6 @@ interface ProductsState {
 export const Products: React.FC = () => {
   const navigate = useNavigate();
   const { addItem } = useCart();
-  const { success, error } = useToast();
   const [state, setState] = useState<ProductsState>({
     products: [],
     pagination: null,
@@ -55,17 +53,15 @@ export const Products: React.FC = () => {
     setCurrentPage(newPage);
   };
 
-  const handleAddToCart = (product: Product, e: React.MouseEvent) => {
+  const handleAddToCart = async (product: Product, e: React.MouseEvent) => {
     e.stopPropagation(); // Evita que o clique do botão navegue para a página de detalhes
     if (product.stock > 0) {
       try {
-        addItem(product, 1);
-        success('Produto adicionado!', `${product.name} foi adicionado ao carrinho`);
-      } catch (err) {
-        error('Erro ao adicionar produto', 'Tente novamente mais tarde');
+        await addItem(product.id, 1);
+        alert(`${product.name} adicionado ao carrinho!`);
+      } catch (error) {
+        alert('Erro ao adicionar produto ao carrinho. Tente novamente.');
       }
-    } else {
-      error('Produto indisponível', 'Este produto está fora de estoque');
     }
   };
 

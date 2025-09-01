@@ -1,5 +1,6 @@
 import { API_ENDPOINTS } from '../utils/constants';
 import { ProductsResponse, ProductResponse } from '../types/product';
+import { CartResponse, AddToCartRequest, AddToCartResponse } from '../types/cart';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -67,6 +68,27 @@ class ApiService {
   // Método específico para buscar produto por ID
   async getProductById(id: string): Promise<ProductResponse> {
     return this.get<ProductResponse>(`${API_ENDPOINTS.PRODUCTS}/${id}`);
+  }
+
+  // Métodos do carrinho
+  async getCart(): Promise<CartResponse> {
+    return this.get<CartResponse>(API_ENDPOINTS.CART);
+  }
+
+  async addToCart(data: AddToCartRequest): Promise<AddToCartResponse> {
+    return this.post<AddToCartResponse>(API_ENDPOINTS.CART, data);
+  }
+
+  async updateCartItem(itemId: string, quantity: number): Promise<AddToCartResponse> {
+    return this.put<AddToCartResponse>(`${API_ENDPOINTS.CART}/${itemId}`, { quantity });
+  }
+
+  async removeCartItem(itemId: string): Promise<AddToCartResponse> {
+    return this.delete<AddToCartResponse>(`${API_ENDPOINTS.CART}/${itemId}`);
+  }
+
+  async clearCart(): Promise<AddToCartResponse> {
+    return this.delete<AddToCartResponse>(API_ENDPOINTS.CART);
   }
 }
 
