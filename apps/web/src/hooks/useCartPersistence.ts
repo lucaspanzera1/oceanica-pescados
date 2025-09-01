@@ -1,30 +1,30 @@
 import { useEffect } from 'react';
 import { CartState } from '../context/CartContext';
 
-const CART_STORAGE_KEY = 'shopping_cart';
+// Como não podemos usar localStorage em artifacts, vamos usar uma abordagem em memória
+let cartMemoryStorage: CartState | null = null;
 
 export const useCartPersistence = () => {
-  // Função para salvar o carrinho
+  // Função para salvar o carrinho em memória
   const saveCart = (cartState: CartState): void => {
     try {
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartState));
+      cartMemoryStorage = { ...cartState };
+      console.log('Carrinho salvo em memória:', cartState);
     } catch (error) {
       console.error('Erro ao salvar carrinho:', error);
     }
   };
 
-  // Função para carregar o carrinho
+  // Função para carregar o carrinho da memória
   const loadCart = (): CartState | null => {
     try {
-      const savedCart = localStorage.getItem(CART_STORAGE_KEY);
-      if (savedCart) {
-        const parsedCart = JSON.parse(savedCart);
+      if (cartMemoryStorage) {
         // Valida a estrutura do carrinho
-        if (parsedCart && 
-            Array.isArray(parsedCart.items) && 
-            typeof parsedCart.totalItems === 'number' && 
-            typeof parsedCart.totalPrice === 'number') {
-          return parsedCart;
+        if (cartMemoryStorage && 
+            Array.isArray(cartMemoryStorage.items) && 
+            typeof cartMemoryStorage.totalItems === 'number' && 
+            typeof cartMemoryStorage.totalPrice === 'number') {
+          return cartMemoryStorage;
         }
       }
     } catch (error) {
@@ -33,10 +33,11 @@ export const useCartPersistence = () => {
     return null;
   };
 
-  // Função para limpar o carrinho do localStorage
+  // Função para limpar o carrinho da memória
   const clearStoredCart = (): void => {
     try {
-      localStorage.removeItem(CART_STORAGE_KEY);
+      cartMemoryStorage = null;
+      console.log('Carrinho limpo da memória');
     } catch (error) {
       console.error('Erro ao limpar carrinho:', error);
     }
@@ -45,28 +46,24 @@ export const useCartPersistence = () => {
   // Função para verificar se há carrinho salvo
   const hasStoredCart = (): boolean => {
     try {
-      const savedCart = localStorage.getItem(CART_STORAGE_KEY);
-      return savedCart !== null && savedCart !== '';
+      return cartMemoryStorage !== null;
     } catch (error) {
       console.error('Erro ao verificar carrinho salvo:', error);
       return false;
     }
   };
 
-  // Listener para mudanças no localStorage (útil para sincronizar entre abas)
+  // Listener para mudanças no carrinho (simulado)
   useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === CART_STORAGE_KEY) {
-        // Pode disparar um evento customizado ou callback aqui
-        // para sincronizar o estado entre diferentes abas
-        console.log('Carrinho atualizado em outra aba');
-      }
+    const handleCartChange = () => {
+      console.log('Carrinho atualizado');
     };
 
-    window.addEventListener('storage', handleStorageChange);
+    // Simular listener de mudanças
+    window.addEventListener('cartUpdated', handleCartChange);
     
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('cartUpdated', handleCartChange);
     };
   }, []);
 

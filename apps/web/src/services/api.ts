@@ -15,7 +15,15 @@ class ApiService {
     endpoint: string, 
     options: RequestInit = {}
   ): Promise<T> {
-    const token = localStorage.getItem('token');
+    // Verificar se localStorage está disponível
+    let token = null;
+    try {
+      if (typeof localStorage !== 'undefined') {
+        token = localStorage.getItem('token');
+      }
+    } catch (error) {
+      console.warn('localStorage não disponível:', error);
+    }
     
     const config: RequestInit = {
       headers: {
@@ -26,14 +34,25 @@ class ApiService {
       ...options,
     };
 
+    console.log(`Fazendo requisição: ${this.baseUrl}${endpoint}`, { method: config.method || 'GET' });
+
     const response = await fetch(`${this.baseUrl}${endpoint}`, config);
     
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Erro na requisição');
+      let errorMessage = `Erro HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const error = await response.json();
+        errorMessage = error.message || errorMessage;
+      } catch {
+        // Se não conseguir parsear o JSON, manter a mensagem de erro HTTP
+      }
+      console.error(`Erro na requisição ${endpoint}:`, errorMessage);
+      throw new Error(errorMessage);
     }
 
-    return response.json();
+    const data = await response.json();
+    console.log(`Resposta da requisição ${endpoint}:`, data);
+    return data;
   }
 
   async get<T>(endpoint: string): Promise<T> {
@@ -79,14 +98,21 @@ class ApiService {
     return this.post<AddToCartResponse>(API_ENDPOINTS.CART, data);
   }
 
-  async updateCartItem(itemId: string, quantity: number): Promise<AddToCartResponse> {
-    return this.put<AddToCartResponse>(`${API_ENDPOINTS.CART}/${itemId}`, { quantity });
+  // Atualizar quantidade de um item específico no carrinho
+  async updateCartItem(productId: string, quantity: number): Promise<AddToCartResponse> {
+    const endpoint = `${API_ENDPOINTS.CART}/${productId}`;
+    console.log(`Atualizando produto no carrinho: ${productId} com quantidade: ${quantity}`);
+    return this.put<AddToCartResponse>(endpoint, { quantity });
   }
 
-  async removeCartItem(itemId: string): Promise<AddToCartResponse> {
-    return this.delete<AddToCartResponse>(`${API_ENDPOINTS.CART}/${itemId}`);
+  // Remover um item específico do carrinho
+  async removeCartItem(productId: string): Promise<AddToCartResponse> {
+    const endpoint = `${API_ENDPOINTS.CART}/${productId}`;
+    console.log(`Removendo produto do carrinho: ${productId}`);
+    return this.delete<AddToCartResponse>(endpoint);
   }
 
+  // Limpar todo o carrinho
   async clearCart(): Promise<AddToCartResponse> {
     return this.delete<AddToCartResponse>(API_ENDPOINTS.CART);
   }

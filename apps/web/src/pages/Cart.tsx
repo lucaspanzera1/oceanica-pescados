@@ -1,12 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout/Layout';
 import { useCart } from '../context/CartContext';
-import { Trash2, Plus, Minus, ShoppingBag, AlertCircle } from 'lucide-react';
+import { useToast } from '../context/ToastContext';
+import { Trash2, Plus, Minus, ShoppingBag, AlertCircle, Loader } from 'lucide-react';
 
 export const Cart: React.FC = () => {
   const navigate = useNavigate();
   const { cart, loading, error, updateQuantity, removeItem, clearCart } = useCart();
+  const { success, error: showError } = useToast();
+  
+  // Estados para controlar loading de ações individuais
+  const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
+  const [removingItems, setRemovingItems] = useState<Set<string>>(new Set());
+  const [clearingCart, setClearingCart] = useState(false);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -15,45 +22,111 @@ export const Cart: React.FC = () => {
     }).format(price);
   };
 
-  const handleQuantityChange = async (itemId: string, currentQuantity: number, change: number, maxStock: number) => {
+  const handleQuantityChange = async (itemId: string, currentQuantity: number, change: number, maxStock: number, productName: string) => {
     const newQuantity = currentQuantity + change;
-    if (newQuantity > 0 && newQuantity <= maxStock) {
-      try {
-        await updateQuantity(itemId, newQuantity);
-      } catch (error) {
-        console.error('Erro ao atualizar quantidade:', error);
-      }
+    
+    if (newQuantity < 1) {
+      showError('Quantidade inválida', 'A quantidade deve ser pelo menos 1');
+      return;
+    }
+    
+    if (newQuantity > maxStock) {
+      showError('Estoque insuficiente', `Temos apenas ${maxStock} unidades disponíveis`);
+      return;
+    }
+
+    // Adicionar item ao set de loading
+    setUpdatingItems(prev => new Set(prev).add(itemId));
+
+    try {
+      await updateQuantity(itemId, newQuantity);
+      
+      success(
+        'Quantidade atualizada!',
+        `${productName} - ${newQuantity} unidade${newQuantity > 1 ? 's' : ''}`
+      );
+    } catch (error) {
+      console.error('Erro ao atualizar quantidade:', error);
+      showError(
+        'Erro ao atualizar quantidade',
+        'Tente novamente mais tarde'
+      );
+    } finally {
+      // Remover item do set de loading
+      setUpdatingItems(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(itemId);
+        return newSet;
+      });
     }
   };
 
-  const handleRemoveItem = async (itemId: string) => {
+  const handleRemoveItem = async (itemId: string, productName: string) => {
+    setRemovingItems(prev => new Set(prev).add(itemId));
+
     try {
       await removeItem(itemId);
+      success(
+        'Item removido!',
+        `${productName} foi removido do carrinho`
+      );
     } catch (error) {
       console.error('Erro ao remover item:', error);
+      showError(
+        'Erro ao remover item',
+        'Tente novamente mais tarde'
+      );
+    } finally {
+      setRemovingItems(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(itemId);
+        return newSet;
+      });
     }
   };
 
   const handleClearCart = async () => {
-    if (window.confirm('Tem certeza que deseja limpar todo o carrinho?')) {
-      try {
-        await clearCart();
-      } catch (error) {
-        console.error('Erro ao limpar carrinho:', error);
-      }
+    setClearingCart(true);
+
+    try {
+      await clearCart();
+      success(
+        'Carrinho limpo!',
+        'Todos os itens foram removidos do carrinho'
+      );
+    } catch (error) {
+      console.error('Erro ao limpar carrinho:', error);
+      showError(
+        'Erro ao limpar carrinho',
+        'Tente novamente mais tarde'
+      );
+    } finally {
+      setClearingCart(false);
     }
   };
 
   const handleCheckout = () => {
     if (!cart) return;
-    alert(`Finalizar compra de ${cart.summary.totalItems} item(s) por ${formatPrice(cart.summary.totalAmount)}`);
+    
+    success(
+      'Redirecionando para checkout...',
+      `${cart.summary.totalItems} item(s) - ${formatPrice(cart.summary.totalAmount)}`
+    );
+    
+    // Simular redirecionamento para checkout
+    setTimeout(() => {
+      alert(`Checkout: ${cart.summary.totalItems} item(s) por ${formatPrice(cart.summary.totalAmount)}`);
+    }, 1500);
   };
 
   if (loading) {
     return (
       <Layout>
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+          <div className="flex flex-col items-center space-y-4">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
+            <p className="text-gray-600">Carregando carrinho...</p>
+          </div>
         </div>
       </Layout>
     );
@@ -139,86 +212,124 @@ export const Cart: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Lista de itens */}
             <div className="lg:col-span-2 space-y-4">
-              {cart.items.map((item) => (
-                <div key={item.id} className="bg-white rounded-lg shadow-md p-6">
-                  <div className="flex items-center space-x-4">
-                    {/* Imagem do produto */}
-                    <div className="flex-shrink-0">
-                      <img
-                        src={item.product.imageUrl}
-                        alt={item.product.name}
-                        className="w-20 h-20 object-cover rounded-lg"
-                        onError={(e) => {
-                          e.currentTarget.src = 'https://via.placeholder.com/80x80?text=Sem+Imagem';
-                        }}
-                      />
-                    </div>
+              {cart.items.map((item) => {
+                const isUpdating = updatingItems.has(item.id);
+                const isRemoving = removingItems.has(item.id);
+                const isDisabled = isUpdating || isRemoving;
 
-                    {/* Informações do produto */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-semibold text-gray-900 truncate">
-                        {item.product.name}
-                      </h3>
-                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                        {item.product.description}
-                      </p>
-                      <div className="mt-2 flex items-center justify-between">
-                        <span className="text-lg font-bold text-green-600">
-                          {formatPrice(item.product.price)}
+                return (
+                  <div 
+                    key={item.id} 
+                    className={`bg-white rounded-lg shadow-md p-6 transition-opacity ${
+                      isDisabled ? 'opacity-60' : ''
+                    }`}
+                  >
+                    <div className="flex items-center space-x-4">
+                      {/* Imagem do produto */}
+                      <div className="flex-shrink-0">
+                        <img
+                          src={item.product.imageUrl}
+                          alt={item.product.name}
+                          className="w-20 h-20 object-cover rounded-lg"
+                          onError={(e) => {
+                            e.currentTarget.src = 'https://via.placeholder.com/80x80?text=Sem+Imagem';
+                          }}
+                        />
+                      </div>
+
+                      {/* Informações do produto */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-semibold text-gray-900 truncate">
+                          {item.product.name}
+                        </h3>
+                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                          {item.product.description}
+                        </p>
+                        <div className="mt-2 flex items-center justify-between">
+                          <span className="text-lg font-bold text-green-600">
+                            {formatPrice(item.product.price)}
+                          </span>
+                          <span className="text-sm text-gray-500">
+                            Estoque: {item.product.stock}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Controles de quantidade */}
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => handleQuantityChange(
+                            item.id, 
+                            item.quantity, 
+                            -1, 
+                            item.product.stock,
+                            item.product.name
+                          )}
+                          disabled={isDisabled || item.quantity <= 1}
+                          className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          {isUpdating ? (
+                            <Loader className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Minus className="h-4 w-4" />
+                          )}
+                        </button>
+                        
+                        <span className="text-lg font-semibold min-w-[2rem] text-center">
+                          {item.quantity}
                         </span>
-                        <span className="text-sm text-gray-500">
-                          Estoque: {item.product.stock}
+                        
+                        <button
+                          onClick={() => handleQuantityChange(
+                            item.id, 
+                            item.quantity, 
+                            1, 
+                            item.product.stock,
+                            item.product.name
+                          )}
+                          disabled={isDisabled || item.quantity >= item.product.stock}
+                          className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          {isUpdating ? (
+                            <Loader className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Plus className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Subtotal e remover */}
+                      <div className="flex flex-col items-end space-y-2">
+                        <span className="text-lg font-bold text-gray-900">
+                          {formatPrice(item.subtotal)}
                         </span>
+                        <button
+                          onClick={() => handleRemoveItem(item.id, item.product.name)}
+                          disabled={isDisabled}
+                          className="text-red-500 hover:text-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Remover item"
+                        >
+                          {isRemoving ? (
+                            <Loader className="h-5 w-5 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-5 w-5" />
+                          )}
+                        </button>
                       </div>
                     </div>
-
-                    {/* Controles de quantidade */}
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => handleQuantityChange(item.id, item.quantity, -1, item.product.stock)}
-                        disabled={item.quantity <= 1}
-                        className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <Minus className="h-4 w-4" />
-                      </button>
-                      
-                      <span className="text-lg font-semibold min-w-[2rem] text-center">
-                        {item.quantity}
-                      </span>
-                      
-                      <button
-                        onClick={() => handleQuantityChange(item.id, item.quantity, 1, item.product.stock)}
-                        disabled={item.quantity >= item.product.stock}
-                        className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </button>
-                    </div>
-
-                    {/* Subtotal e remover */}
-                    <div className="flex flex-col items-end space-y-2">
-                      <span className="text-lg font-bold text-gray-900">
-                        {formatPrice(item.subtotal)}
-                      </span>
-                      <button
-                        onClick={() => handleRemoveItem(item.id)}
-                        className="text-red-500 hover:text-red-700 transition-colors"
-                        title="Remover item"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </button>
-                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
 
               {/* Botão limpar carrinho */}
               <div className="flex justify-end">
                 <button
                   onClick={handleClearCart}
-                  className="text-red-600 hover:text-red-800 font-medium transition-colors"
+                  disabled={clearingCart}
+                  className="text-red-600 hover:text-red-800 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
                 >
-                  Limpar Carrinho
+                  {clearingCart && <Loader className="h-4 w-4 animate-spin" />}
+                  <span>Limpar Carrinho</span>
                 </button>
               </div>
             </div>
@@ -237,7 +348,7 @@ export const Cart: React.FC = () => {
                   </div>
                   <div className="flex justify-between text-gray-600">
                     <span>Frete</span>
-                    <span>Grátis</span>
+                    <span className="text-green-600 font-medium">Grátis</span>
                   </div>
                   <hr className="border-gray-200" />
                   <div className="flex justify-between text-lg font-semibold text-gray-900">
@@ -265,6 +376,7 @@ export const Cart: React.FC = () => {
                   <p>✓ Frete grátis para todo o Brasil</p>
                   <p>✓ Produtos frescos e selecionados</p>
                   <p>✓ Entrega rápida e segura</p>
+                  <p>✓ 7 dias para trocas e devoluções</p>
                 </div>
               </div>
             </div>
