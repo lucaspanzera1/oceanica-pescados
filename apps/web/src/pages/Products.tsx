@@ -4,6 +4,7 @@ import { Layout } from '../components/layout/Layout';
 import { apiService } from '../services/api';
 import { Product, Pagination } from '../types/product';
 import { useCart } from '../context/CartContext';
+import { useToast } from '../context/ToastContext';
 
 interface ProductsState {
   products: Product[];
@@ -14,7 +15,9 @@ interface ProductsState {
 
 export const Products: React.FC = () => {
   const navigate = useNavigate();
-  const { addItem } = useCart();
+  const { addToCart } = useCart(); // ✅ Mudado para addToCart (consistente com ProductDetail)
+  const { success, error } = useToast();
+  
   const [state, setState] = useState<ProductsState>({
     products: [],
     pagination: null,
@@ -53,14 +56,27 @@ export const Products: React.FC = () => {
     setCurrentPage(newPage);
   };
 
-  const handleAddToCart = async (product: Product, e: React.MouseEvent) => {
-    e.stopPropagation(); // Evita que o clique do botão navegue para a página de detalhes
-    if (product.stock > 0) {
+  // ✅ Função corrigida - recebe product e event, não usa state.product
+  const handleAddToCart = async (product: Product, event: React.MouseEvent) => {
+    // Previne que o clique no botão também dispare o clique no card
+    event.stopPropagation();
+    
+    if (product && product.stock > 0) {
       try {
-        await addItem(product.id, 1);
-        alert(`${product.name} adicionado ao carrinho!`);
-      } catch (error) {
-        alert('Erro ao adicionar produto ao carrinho. Tente novamente.');
+        await addToCart(product.id, 1); // Adiciona 1 unidade por padrão
+        
+        success(
+          'Produto adicionado ao carrinho!',
+          `1 unidade de ${product.name}`
+        );
+        
+      } catch (err) {
+        console.error('Erro ao adicionar ao carrinho:', err);
+        
+        error(
+          'Erro ao adicionar ao carrinho', 
+          'Tente novamente mais tarde'
+        );
       }
     }
   };
