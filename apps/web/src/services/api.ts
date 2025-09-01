@@ -1,6 +1,7 @@
 import { API_ENDPOINTS } from '../utils/constants';
 import { ProductsResponse, ProductResponse } from '../types/product';
 import { CartResponse, AddToCartRequest, AddToCartResponse } from '../types/cart';
+import { OrdersResponse, CreateOrderRequest, CreateOrderResponse } from '../types/order';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -116,6 +117,21 @@ class ApiService {
   async clearCart(): Promise<AddToCartResponse> {
     return this.delete<AddToCartResponse>(API_ENDPOINTS.CART);
   }
+
+  // Método para buscar pedidos do usuário
+async getOrders(page: number = 1, limit: number = 10): Promise<OrdersResponse> {
+  return this.get<OrdersResponse>(`${API_ENDPOINTS.ORDERS}?page=${page}&limit=${limit}`);
+}
+
+// Método para criar um novo pedido
+async createOrder(data: CreateOrderRequest): Promise<CreateOrderResponse> {
+  return this.post<CreateOrderResponse>(API_ENDPOINTS.ORDERS, data);
+}
+
+// Método para buscar um pedido específico por ID (opcional)
+async getOrderById(id: string): Promise<CreateOrderResponse> {
+  return this.get<CreateOrderResponse>(`${API_ENDPOINTS.ORDERS}/${id}`);
+}
 }
 
 export const apiService = new ApiService(API_BASE_URL);
