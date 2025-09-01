@@ -69,6 +69,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const register = async (email: string, password: string): Promise<boolean> => {
+    try {
+      setLoading(true);
+      const response = await authService.register({
+        email,
+        password,
+        role: 'cliente'
+      });
+      
+      if (response.success) {
+        setUser(response.data.user);
+        setToken(response.data.token);
+        authService.setToken(response.data.token);
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Erro no registro:', error);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = () => {
     setUser(null);
     setToken(null);
@@ -79,6 +104,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     token,
     login,
+    register,
     logout,
     loading,
     isAuthenticated,

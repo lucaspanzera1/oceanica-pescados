@@ -12,7 +12,7 @@ class ProductService {
    */
   async createProduct(productData) {
     try {
-      const { name, description, price, stock = 0, image_url } = productData;
+      const { name, description, price, stock = 0, image_url, image_url1 } = productData;
 
       // Validações
       if (!name || name.trim().length === 0) {
@@ -29,9 +29,9 @@ class ProductService {
 
       // Insere o produto no banco
       const query = `
-        INSERT INTO products (name, description, price, stock, image_url) 
-        VALUES ($1, $2, $3, $4, $5) 
-        RETURNING id, name, description, price, stock, image_url, created_at, updated_at
+        INSERT INTO products (name, description, price, stock, image_url, image_url1) 
+        VALUES ($1, $2, $3, $4, $5, $6) 
+        RETURNING id, name, description, price, stock, image_url, image_url1, created_at, updated_at
       `;
       
       const result = await pool.query(query, [
@@ -39,7 +39,8 @@ class ProductService {
         description?.trim() || null,
         parseFloat(price),
         parseInt(stock),
-        image_url?.trim() || null
+        image_url?.trim() || null,
+        image_url1?.trim() || null
       ]);
       
       return result.rows[0];
@@ -63,7 +64,7 @@ class ProductService {
       }
 
       const query = `
-        SELECT id, name, description, price, stock, image_url, created_at, updated_at 
+        SELECT id, name, description, price, stock, image_url, image_url1, created_at, updated_at 
         FROM products 
         WHERE id = $1
       `;
@@ -117,7 +118,7 @@ class ProductService {
       }
 
       const query = `
-        SELECT id, name, description, price, stock, image_url, created_at, updated_at 
+        SELECT id, name, description, price, stock, image_url, image_url1, created_at, updated_at 
         FROM products 
         ${whereClause}
         ORDER BY ${sortBy} ${sortOrder.toUpperCase()}
@@ -182,7 +183,7 @@ class ProductService {
         throw new Error('Produto não encontrado');
       }
 
-      const { name, description, price, stock, image_url } = updateData;
+      const { name, description, price, stock, image_url, image_url1 } = updateData;
 
       // Validações
       if (name !== undefined && (!name || name.trim().length === 0)) {
@@ -227,6 +228,11 @@ class ProductService {
         values.push(image_url?.trim() || null);
       }
 
+      if (image_url1 !== undefined) {
+        updates.push(`image_url1 = $${paramCounter++}`);
+        values.push(image_url1?.trim() || null);
+      }
+
       if (updates.length === 0) {
         throw new Error('Nenhum campo fornecido para atualização');
       }
@@ -239,7 +245,7 @@ class ProductService {
         UPDATE products 
         SET ${updates.join(', ')}
         WHERE id = $${paramCounter}
-        RETURNING id, name, description, price, stock, image_url, created_at, updated_at
+        RETURNING id, name, description, price, stock, image_url, image_url1, created_at, updated_at
       `;
 
       const result = await pool.query(query, values);
@@ -301,7 +307,7 @@ class ProductService {
         UPDATE products 
         SET stock = stock + $1, updated_at = CURRENT_TIMESTAMP
         WHERE id = $2 AND (stock + $1) >= 0
-        RETURNING id, name, description, price, stock, image_url, created_at, updated_at
+        RETURNING id, name, description, price, stock, image_url, image_url1, created_at, updated_at
       `;
 
       const result = await pool.query(query, [quantity, id]);

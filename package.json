@@ -28,6 +28,7 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.16.3",
+    "react-router-dom": "^7.8.2",
     "winston": "^3.17.0"
   }
 }

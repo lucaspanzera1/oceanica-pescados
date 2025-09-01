@@ -1,3 +1,8 @@
+import { API_ENDPOINTS } from '../utils/constants';
+import { ProductsResponse, ProductResponse } from '../types/product';
+import { CartResponse, AddToCartRequest, AddToCartResponse } from '../types/cart';
+import { OrdersResponse, CreateOrderRequest, CreateOrderResponse } from '../types/order';
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 class ApiService {
@@ -11,7 +16,15 @@ class ApiService {
     endpoint: string, 
     options: RequestInit = {}
   ): Promise<T> {
-    const token = localStorage.getItem('token');
+    // Verificar se localStorage está disponível
+    let token = null;
+    try {
+      if (typeof localStorage !== 'undefined') {
+        token = localStorage.getItem('token');
+      }
+    } catch (error) {
+      console.warn('localStorage não disponível:', error);
+    }
     
     const config: RequestInit = {
       headers: {
@@ -22,14 +35,25 @@ class ApiService {
       ...options,
     };
 
+    console.log(`Fazendo requisição: ${this.baseUrl}${endpoint}`, { method: config.method || 'GET' });
+
     const response = await fetch(`${this.baseUrl}${endpoint}`, config);
     
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Erro na requisição');
+      let errorMessage = `Erro HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const error = await response.json();
+        errorMessage = error.message || errorMessage;
+      } catch {
+        // Se não conseguir parsear o JSON, manter a mensagem de erro HTTP
+      }
+      console.error(`Erro na requisição ${endpoint}:`, errorMessage);
+      throw new Error(errorMessage);
     }
 
-    return response.json();
+    const data = await response.json();
+    console.log(`Resposta da requisição ${endpoint}:`, data);
+    return data;
   }
 
   async get<T>(endpoint: string): Promise<T> {
@@ -55,7 +79,73 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+  // ============ MÉTODOS DE PRODUTOS ============
+  async getProducts(page: number = 1, limit: number = 10): Promise<ProductsResponse> {
+    return this.get<ProductsResponse>(`${API_ENDPOINTS.PRODUCTS}?page=${page}&limit=${limit}`);
+  }
+
+  async getProductById(id: string): Promise<ProductResponse> {
+    return this.get<ProductResponse>(`${API_ENDPOINTS.PRODUCTS}/${id}`);
+  }
+
+  // ============ MÉTODOS DO CARRINHO ============
+  async getCart(): Promise<CartResponse> {
+    return this.get<CartResponse>(API_ENDPOINTS.CART);
+  }
+
+  async addToCart(data: AddToCartRequest): Promise<AddToCartResponse> {
+    return this.post<AddToCartResponse>(API_ENDPOINTS.CART, data);
+  }
+
+  async updateCartItem(productId: string, quantity: number): Promise<AddToCartResponse> {
+    const endpoint = `${API_ENDPOINTS.CART}/${productId}`;
+    console.log(`Atualizando produto no carrinho: ${productId} com quantidade: ${quantity}`);
+    return this.put<AddToCartResponse>(endpoint, { quantity });
+  }
+
+  async removeCartItem(productId: string): Promise<AddToCartResponse> {
+    const endpoint = `${API_ENDPOINTS.CART}/${productId}`;
+    console.log(`Removendo produto do carrinho: ${productId}`);
+    return this.delete<AddToCartResponse>(endpoint);
+  }
+
+  async clearCart(): Promise<AddToCartResponse> {
+    return this.delete<AddToCartResponse>(API_ENDPOINTS.CART);
+  }
+
+  // ============ MÉTODOS DE PEDIDOS ============
+  
+  /**
+   * Busca todos os pedidos do usuário autenticado
+   * @param page Página atual (padrão: 1)
+   * @param limit Itens por página (padrão: 10)
+   */
+  async getOrders(page: number = 1, limit: number = 10): Promise<OrdersResponse> {
+    const endpoint = `${API_ENDPOINTS.ORDERS}?page=${page}&limit=${limit}`;
+    console.log(`Buscando pedidos - página ${page}, limite ${limit}`);
+    return this.get<OrdersResponse>(endpoint);
+  }
+
+  /**
+   * Cria um novo pedido com os itens do carrinho atual
+   * @param data Dados do pedido (preço do frete)
+   */
+  async createOrder(data: CreateOrderRequest): Promise<CreateOrderResponse> {
+    console.log('Criando novo pedido:', data);
+    // Note: O endpoint para criar pedido é POST /orders, não /orders/my
+    return this.post<CreateOrderResponse>('/orders', data);
+  }
+
+  /**
+   * Busca um pedido específico por ID
+   * @param id ID do pedido
+   */
+  async getOrderById(id: string): Promise<CreateOrderResponse> {
+    const endpoint = `/orders/${id}`;
+    console.log(`Buscando pedido por ID: ${id}`);
+    return this.get<CreateOrderResponse>(endpoint);
+  }
 }
 
 export const apiService = new ApiService(API_BASE_URL);
-

@@ -15,32 +15,45 @@ class AuthService {
    * @returns {Object} Dados do usuário criado (sem a senha)
    */
   async createUser(email, password, role = 'cliente') {
-    try {
-      // Verifica se o email já existe
-      const existingUser = await this.findUserByEmail(email);
-      if (existingUser) {
-        throw new Error('Email já cadastrado no sistema');
-      }
-
-      // Gera hash da senha (salt rounds = 12 para boa segurança)
-      const saltRounds = 12;
-      const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-      // Insere o usuário no banco
-      const query = `
-        INSERT INTO users (email, password, role) 
-        VALUES ($1, $2, $3) 
-        RETURNING id, email, role, created_at
-      `;
-      
-      const result = await pool.query(query, [email, hashedPassword, role]);
-      return result.rows[0];
-      
-    } catch (error) {
-      console.error('Erro ao criar usuário:', error.message);
-      throw error;
+  try {
+    // Verifica se o email já existe
+    const existingUser = await this.findUserByEmail(email);
+    if (existingUser) {
+      throw new Error('Email já cadastrado no sistema');
     }
+
+    // Gera hash da senha
+    const saltRounds = 12;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Insere o usuário no banco
+    const query = `
+      INSERT INTO users (email, password, role) 
+      VALUES ($1, $2, $3) 
+      RETURNING id, email, role, created_at
+    `;
+    const result = await pool.query(query, [email, hashedPassword, role]);
+    const user = result.rows[0];
+
+    // Gera o token JWT para o usuário recém-criado
+    const token = this.generateToken({
+      id: user.id,
+      email: user.email,
+      role: user.role
+    });
+
+    // Retorna os dados do usuário + token
+    return {
+      user,
+      token
+    };
+    
+  } catch (error) {
+    console.error('Erro ao criar usuário:', error.message);
+    throw error;
   }
+}
+
 
   /**
    * Autentica um usuário e retorna JWT

@@ -2,14 +2,15 @@ import React, { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Card, Button, Input } from '../components/ui';
-import { Fish, Lock, User, ArrowLeft, AlertTriangle, Loader2 } from 'lucide-react';
+import { Fish, UserPlus, User, ArrowLeft, AlertTriangle, Loader2, CheckCircle } from 'lucide-react';
 
-export const Login: React.FC = () => {
+export const Register: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   
-  const { login, loading, isAuthenticated } = useAuth();
+  const { register, loading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   // Se já estiver autenticado, redireciona para o dashboard
@@ -17,27 +18,57 @@ export const Login: React.FC = () => {
     return <Navigate to="/dashboard" replace />;
   }
 
+  const validatePassword = (password: string) => {
+    const minLength = password.length >= 8;
+    const hasUpper = /[A-Z]/.test(password);
+    const hasLower = /[a-z]/.test(password);
+    const hasNumber = /\d/.test(password);
+    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    
+    return {
+      minLength,
+      hasUpper,
+      hasLower,
+      hasNumber,
+      hasSpecial,
+      isValid: minLength && hasUpper && hasLower && hasNumber && hasSpecial
+    };
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (!email || !password) {
+    if (!email || !password || !confirmPassword) {
       setError('Por favor, preencha todos os campos');
       return;
     }
 
+    if (password !== confirmPassword) {
+      setError('As senhas não coincidem');
+      return;
+    }
+
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      setError('A senha não atende aos requisitos mínimos');
+      return;
+    }
+
     try {
-      const success = await login(email, password);
+      const success = await register(email, password);
       
       if (success) {
         navigate('/dashboard');
       } else {
-        setError('Email ou senha inválidos');
+        setError('Erro ao criar conta. Email pode já estar em uso.');
       }
     } catch (err) {
-      setError('Erro ao fazer login. Tente novamente.');
+      setError('Erro ao criar conta. Tente novamente.');
     }
   };
+
+  const passwordValidation = validatePassword(password);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-100 flex">
@@ -49,9 +80,11 @@ export const Login: React.FC = () => {
           alt="Frutos do Mar"
           className="w-full h-full object-cover"
         />
+        <div className="absolute inset-0 z-20 flex flex-col justify-center items-center text-white p-8">
+        </div>
       </div>
 
-      {/* Seção do Login - Lado Direito */}
+      {/* Seção do Registro - Lado Direito */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-4 lg:p-8">
         <div className="w-full max-w-md">
           {/* Logo/Título Mobile */}
@@ -75,20 +108,20 @@ export const Login: React.FC = () => {
           <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
             <div className="space-y-6 p-8">
               <div className="text-center">
-                <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center mb-4">
-                  <Fish className="h-8 w-8 text-white" />
+                <div className="mx-auto w-16 h-16 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center mb-4">
+                  <UserPlus className="h-8 w-8 text-white" />
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                  Bem-vindo de volta!
+                  Crie sua conta
                 </h2>
                 <p className="text-gray-600">
-                  Acesse sua conta
+                  Cadastre-se para acessar os melhores frutos do mar
                 </p>
               </div>
 
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center">
-                  <AlertTriangle className="mr-2 h-5 w-5" />
+                  <AlertTriangle className="mr-2 h-5 w-5 flex-shrink-0" />
                   {error}
                 </div>
               )}
@@ -104,31 +137,78 @@ export const Login: React.FC = () => {
                   className="transition-all duration-200 focus:ring-blue-500 focus:border-blue-500"
                 />
 
+                <div>
+                  <Input
+                    label="Senha"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    className="transition-all duration-200 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  
+                  {password && (
+                    <div className="mt-2 space-y-1 text-sm">
+                      <div className={`flex items-center ${passwordValidation.minLength ? 'text-green-600' : 'text-red-600'}`}>
+                        <CheckCircle className={`mr-1 h-3 w-3 ${passwordValidation.minLength ? '' : 'opacity-30'}`} />
+                        Mínimo 8 caracteres
+                      </div>
+                      <div className={`flex items-center ${passwordValidation.hasUpper ? 'text-green-600' : 'text-red-600'}`}>
+                        <CheckCircle className={`mr-1 h-3 w-3 ${passwordValidation.hasUpper ? '' : 'opacity-30'}`} />
+                        Uma letra maiúscula
+                      </div>
+                      <div className={`flex items-center ${passwordValidation.hasLower ? 'text-green-600' : 'text-red-600'}`}>
+                        <CheckCircle className={`mr-1 h-3 w-3 ${passwordValidation.hasLower ? '' : 'opacity-30'}`} />
+                        Uma letra minúscula
+                      </div>
+                      <div className={`flex items-center ${passwordValidation.hasNumber ? 'text-green-600' : 'text-red-600'}`}>
+                        <CheckCircle className={`mr-1 h-3 w-3 ${passwordValidation.hasNumber ? '' : 'opacity-30'}`} />
+                        Um número
+                      </div>
+                      <div className={`flex items-center ${passwordValidation.hasSpecial ? 'text-green-600' : 'text-red-600'}`}>
+                        <CheckCircle className={`mr-1 h-3 w-3 ${passwordValidation.hasSpecial ? '' : 'opacity-30'}`} />
+                        Um caractere especial
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <Input
-                  label="Senha"
+                  label="Confirmar Senha"
                   type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className="transition-all duration-200 focus:ring-blue-500 focus:border-blue-500"
+                  className={`transition-all duration-200 focus:ring-blue-500 focus:border-blue-500 ${
+                    confirmPassword && password !== confirmPassword ? 'border-red-500 focus:border-red-500' : ''
+                  }`}
                 />
+
+                {confirmPassword && password !== confirmPassword && (
+                  <p className="text-red-600 text-sm flex items-center">
+                    <AlertTriangle className="mr-1 h-3 w-3" />
+                    As senhas não coincidem
+                  </p>
+                )}
 
                 <Button
                   type="submit"
                   loading={loading}
-                  className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 transform hover:scale-105 transition-all duration-200 shadow-lg"
+                  disabled={!passwordValidation.isValid || password !== confirmPassword}
+                  className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                   size="large"
                 >
                   {loading ? (
                     <div className="flex items-center justify-center">
                       <Loader2 className="animate-spin h-5 w-5 mr-2" />
-                      Entrando...
+                      Criando conta...
                     </div>
                   ) : (
                     <div className="flex items-center justify-center">
-                      <Lock className="mr-2 h-5 w-5" />
-                      Entrar
+                      <UserPlus className="mr-2 h-5 w-5" />
+                      Criar conta
                     </div>
                   )}
                 </Button>
@@ -145,15 +225,15 @@ export const Login: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Botão de Registro */}
+                {/* Botão de Login */}
                 <button
                   type="button"
-                  onClick={() => navigate('/register')}
+                  onClick={() => navigate('/login')}
                   className="w-full bg-white border-2 border-blue-600 text-blue-600 py-3 px-4 rounded-lg hover:bg-blue-50 transition-all duration-200 font-medium"
                 >
                   <div className="flex items-center justify-center">
                     <User className="mr-2 h-5 w-5" />
-                    Criar nova conta
+                    Já tenho uma conta
                   </div>
                 </button>
 

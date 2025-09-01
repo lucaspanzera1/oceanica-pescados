@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Card, Button } from '../components/ui';
+import { Layout } from '../components/layout/Layout';
 
 export const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -10,6 +11,7 @@ export const Dashboard: React.FC = () => {
   };
 
   return (
+    <Layout>
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -68,5 +70,6 @@ export const Dashboard: React.FC = () => {
         </div>
       </main>
     </div>
+    </Layout>
   );
 };

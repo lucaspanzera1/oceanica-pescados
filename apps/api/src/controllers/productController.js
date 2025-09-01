@@ -10,12 +10,30 @@ class ProductController {
   }
 
   /**
+   * Valida se uma URL é válida
+   * @param {string} url - URL para validar
+   * @returns {boolean} True se for uma URL válida
+   */
+  validateImageUrl(url) {
+    if (!url || url.trim().length === 0) {
+      return true; // URLs vazias são aceitas (null)
+    }
+    
+    try {
+      new URL(url);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
    * POST /products
    * Cria um novo produto (apenas admins)
    */
   async createProduct(req, res) {
     try {
-      const { name, description, price, stock, image_url } = req.body;
+      const { name, description, price, stock, image_url, image_url1 } = req.body;
 
       // Validações básicas
       if (!name || name.trim().length === 0) {
@@ -53,16 +71,20 @@ class ProductController {
         }
       }
 
-      // Validação da URL da imagem
-      if (image_url && image_url.trim().length > 0) {
-        try {
-          new URL(image_url);
-        } catch (error) {
-          return res.status(400).json({
-            success: false,
-            message: 'URL da imagem inválida'
-          });
-        }
+      // Validação da primeira URL da imagem
+      if (image_url && !this.validateImageUrl(image_url)) {
+        return res.status(400).json({
+          success: false,
+          message: 'URL da primeira imagem inválida'
+        });
+      }
+
+      // Validação da segunda URL da imagem
+      if (image_url1 && !this.validateImageUrl(image_url1)) {
+        return res.status(400).json({
+          success: false,
+          message: 'URL da segunda imagem inválida'
+        });
       }
 
       // Cria o produto
@@ -71,7 +93,8 @@ class ProductController {
         description: description?.trim(),
         price: numericPrice,
         stock: numericStock,
-        image_url: image_url?.trim()
+        image_url: image_url?.trim(),
+        image_url1: image_url1?.trim()
       });
 
       res.status(201).json({
@@ -210,7 +233,7 @@ class ProductController {
   async updateProduct(req, res) {
     try {
       const { id } = req.params;
-      const { name, description, price, stock, image_url } = req.body;
+      const { name, description, price, stock, image_url, image_url1 } = req.body;
 
       // Validações dos dados fornecidos
       const updateData = {};
@@ -253,17 +276,29 @@ class ProductController {
 
       if (image_url !== undefined) {
         if (image_url && image_url.trim().length > 0) {
-          try {
-            new URL(image_url);
-            updateData.image_url = image_url.trim();
-          } catch (error) {
+          if (!this.validateImageUrl(image_url)) {
             return res.status(400).json({
               success: false,
-              message: 'URL da imagem inválida'
+              message: 'URL da primeira imagem inválida'
             });
           }
+          updateData.image_url = image_url.trim();
         } else {
           updateData.image_url = null;
+        }
+      }
+
+      if (image_url1 !== undefined) {
+        if (image_url1 && image_url1.trim().length > 0) {
+          if (!this.validateImageUrl(image_url1)) {
+            return res.status(400).json({
+              success: false,
+              message: 'URL da segunda imagem inválida'
+            });
+          }
+          updateData.image_url1 = image_url1.trim();
+        } else {
+          updateData.image_url1 = null;
         }
       }
 

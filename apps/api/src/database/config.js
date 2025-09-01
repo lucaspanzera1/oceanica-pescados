@@ -85,6 +85,7 @@ const initializeDatabase = async () => {
         price NUMERIC(10,2) NOT NULL CHECK (price > 0),
         stock INT DEFAULT 0 CHECK (stock >= 0),
         image_url TEXT,
+        image_url1 TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
