@@ -17,18 +17,28 @@ import {
   Plus,
   ShoppingBag,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  X,
+  Image as ImageIcon
 } from 'lucide-react';
-import { Order } from '../types/order';
+import { Order, OrderItem } from '../types/order';
 
 export const Orders: React.FC = () => {
   const navigate = useNavigate();
-  const { orders, loading, error, pagination, createOrder, fetchOrders } = useOrders();
+  const { orders, loading, error, pagination, createOrder, fetchOrders, getOrderItems, cancelOrder } = useOrders();
   const { cart, clearCart } = useCart();
   const { success, error: showError } = useToast();
   
   const [creatingOrder, setCreatingOrder] = useState(false);
   const [loadingPage, setLoadingPage] = useState(false);
+  
+  // Estados para controle dos pedidos expandidos
+  const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
+  const [orderItems, setOrderItems] = useState<Record<string, OrderItem[]>>({});
+  const [loadingItems, setLoadingItems] = useState<Set<string>>(new Set());
+  const [cancellingOrders, setCancellingOrders] = useState<Set<string>>(new Set());
 
   const formatPrice = (price: string) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -79,6 +89,10 @@ export const Orders: React.FC = () => {
     return statusMap[status] || statusMap['pendente'];
   };
 
+  const canCancelOrder = (status: Order['status']) => {
+    return status === 'pendente' || status === 'processando';
+  };
+
   const handleCreateOrder = async () => {
     if (!cart || cart.items.length === 0) {
       showError(
@@ -90,10 +104,9 @@ export const Orders: React.FC = () => {
 
     setCreatingOrder(true);
     try {
-      const shippingPrice = 15.50; // Valor fixo do frete
+      const shippingPrice = 15.50;
       const newOrder = await createOrder(shippingPrice);
       
-      // Limpar o carrinho após criar o pedido
       await clearCart();
       
       success(
@@ -122,6 +135,69 @@ export const Orders: React.FC = () => {
       showError('Erro ao carregar página', 'Tente novamente');
     } finally {
       setLoadingPage(false);
+    }
+  };
+
+  const toggleOrderExpansion = async (orderId: string) => {
+    const isExpanded = expandedOrders.has(orderId);
+    
+    if (isExpanded) {
+      // Colapsar
+      const newExpanded = new Set(expandedOrders);
+      newExpanded.delete(orderId);
+      setExpandedOrders(newExpanded);
+    } else {
+      // Expandir - buscar itens se ainda não foram carregados
+      if (!orderItems[orderId]) {
+        setLoadingItems(prev => new Set(prev).add(orderId));
+        
+        try {
+          const items = await getOrderItems(orderId);
+          setOrderItems(prev => ({ ...prev, [orderId]: items }));
+        } catch (error) {
+          console.error('Erro ao carregar itens:', error);
+          showError('Erro ao carregar itens', 'Tente novamente');
+          return;
+        } finally {
+          setLoadingItems(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(orderId);
+            return newSet;
+          });
+        }
+      }
+      
+      const newExpanded = new Set(expandedOrders);
+      newExpanded.add(orderId);
+      setExpandedOrders(newExpanded);
+    }
+  };
+
+  const handleCancelOrder = async (orderId: string, orderNumber: string) => {
+    if (!window.confirm('Tem certeza que deseja cancelar este pedido?')) {
+      return;
+    }
+
+    setCancellingOrders(prev => new Set(prev).add(orderId));
+
+    try {
+      await cancelOrder(orderId);
+      success(
+        'Pedido cancelado!',
+        `Pedido #${orderNumber} foi cancelado com sucesso`
+      );
+    } catch (error) {
+      console.error('Erro ao cancelar pedido:', error);
+      showError(
+        'Erro ao cancelar pedido',
+        'Tente novamente mais tarde'
+      );
+    } finally {
+      setCancellingOrders(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(orderId);
+        return newSet;
+      });
     }
   };
 
@@ -263,6 +339,10 @@ export const Orders: React.FC = () => {
             <div className="space-y-6">
               {orders.map((order) => {
                 const statusInfo = getStatusInfo(order.status);
+                const isExpanded = expandedOrders.has(order.id);
+                const isLoadingItems = loadingItems.has(order.id);
+                const isCancelling = cancellingOrders.has(order.id);
+                const items = orderItems[order.id] || [];
                 
                 return (
                   <div key={order.id} className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -280,9 +360,30 @@ export const Orders: React.FC = () => {
                             </p>
                           </div>
                         </div>
-                        <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusInfo.color}`}>
-                          {statusInfo.icon}
-                          <span className="ml-2">{statusInfo.label}</span>
+                        
+                        <div className="flex items-center space-x-3">
+                          {/* Botão de cancelar pedido */}
+                          {canCancelOrder(order.status) && (
+                            <button
+                              onClick={() => handleCancelOrder(order.id, order.id.slice(0, 8))}
+                              disabled={isCancelling}
+                              className="text-red-600 hover:text-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-1"
+                              title="Cancelar pedido"
+                            >
+                              {isCancelling ? (
+                                <Loader className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <X className="h-4 w-4" />
+                              )}
+                              <span className="text-sm">Cancelar</span>
+                            </button>
+                          )}
+                          
+                          {/* Status do pedido */}
+                          <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusInfo.color}`}>
+                            {statusInfo.icon}
+                            <span className="ml-2">{statusInfo.label}</span>
+                          </div>
                         </div>
                       </div>
 
@@ -331,8 +432,127 @@ export const Orders: React.FC = () => {
 
                       {/* Atualização */}
                       {order.updated_at !== order.created_at && (
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-gray-500 mb-4">
                           Atualizado em: {formatDate(order.updated_at)}
+                        </div>
+                      )}
+
+                      {/* Botão para expandir/colapsar */}
+                      <div className="border-t pt-4">
+                        <button
+                          onClick={() => toggleOrderExpansion(order.id)}
+                          disabled={isLoadingItems}
+                          className="flex items-center justify-center w-full py-2 px-4 text-sm font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isLoadingItems ? (
+                            <>
+                              <Loader className="h-4 w-4 animate-spin mr-2" />
+                              <span>Carregando itens...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="mr-2">
+                                {isExpanded ? 'Ocultar itens' : 'Ver itens do pedido'}
+                              </span>
+                              {isExpanded ? (
+                                <ChevronUp className="h-4 w-4" />
+                              ) : (
+                                <ChevronDown className="h-4 w-4" />
+                              )}
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Itens do pedido (accordion) */}
+                    <div className={`border-t bg-gray-50 transition-all duration-300 ease-in-out overflow-hidden ${
+                      isExpanded ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'
+                    }`}>
+                      {isExpanded && items.length > 0 && (
+                        <div className="p-6">
+                          <h4 className="text-lg font-semibold text-gray-900 mb-4">
+                            Itens do Pedido
+                          </h4>
+                          
+                          {/* Lista de itens */}
+                          <div className="space-y-4">
+                            {items.map((item, index) => (
+                              <div key={index} className="flex items-center space-x-4 bg-white p-4 rounded-lg shadow-sm">
+                                {/* Imagem do produto */}
+                                <div className="flex-shrink-0 w-16 h-16 bg-gray-200 rounded-lg overflow-hidden">
+                                  {item.product_image_url ? (
+                                    <img
+                                      src={item.product_image_url}
+                                      alt={item.product_name}
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                        e.currentTarget.nextElementSibling.style.display = 'flex';
+                                      }}
+                                    />
+                                  ) : null}
+                                  <div className={`w-full h-full flex items-center justify-center ${item.product_image_url ? 'hidden' : 'flex'}`}>
+                                    <ImageIcon className="h-8 w-8 text-gray-400" />
+                                  </div>
+                                </div>
+
+                                {/* Informações do produto */}
+                                <div className="flex-1 min-w-0">
+                                  <h5 className="text-sm font-medium text-gray-900 truncate">
+                                    {item.product_name}
+                                  </h5>
+                                  {item.product_description && (
+                                    <p className="text-sm text-gray-500 truncate">
+                                      {item.product_description}
+                                    </p>
+                                  )}
+                                  <div className="flex items-center space-x-4 mt-1">
+                                    <span className="text-sm text-gray-500">
+                                      Qtd: {item.quantity}
+                                    </span>
+                                    <span className="text-sm font-medium text-gray-900">
+                                      {formatPrice(item.unit_price)} cada
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* Subtotal */}
+                                <div className="text-right">
+                                  <p className="text-sm text-gray-500">Subtotal</p>
+                                  <p className="text-lg font-semibold text-gray-900">
+                                    {formatPrice((parseFloat(item.unit_price) * parseInt(item.quantity)).toString())}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Resumo do pedido */}
+                          <div className="mt-6 bg-white p-4 rounded-lg shadow-sm">
+                            <div className="space-y-2">
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">Subtotal dos itens:</span>
+                                <span className="font-medium">
+                                  {formatPrice(
+                                    items.reduce((acc, item) => 
+                                      acc + (parseFloat(item.unit_price) * parseInt(item.quantity)), 0
+                                    ).toString()
+                                  )}
+                                </span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">Frete:</span>
+                                <span className="font-medium">{formatPrice(order.shipping_price)}</span>
+                              </div>
+                              <div className="border-t pt-2 flex justify-between">
+                                <span className="font-semibold text-lg text-gray-900">Total:</span>
+                                <span className="font-bold text-lg text-green-600">
+                                  {formatPrice(order.total_price)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>

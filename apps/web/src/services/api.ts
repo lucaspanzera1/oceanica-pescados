@@ -1,7 +1,7 @@
 import { API_ENDPOINTS } from '../utils/constants';
 import { ProductsResponse, ProductResponse } from '../types/product';
 import { CartResponse, AddToCartRequest, AddToCartResponse } from '../types/cart';
-import { OrdersResponse, CreateOrderRequest, CreateOrderResponse } from '../types/order';
+import { OrdersResponse, CreateOrderRequest, CreateOrderResponse, OrderItemsResponse, CancelOrderResponse } from '../types/order';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -145,6 +145,34 @@ class ApiService {
     const endpoint = `/orders/${id}`;
     console.log(`Buscando pedido por ID: ${id}`);
     return this.get<CreateOrderResponse>(endpoint);
+  }
+
+  /**
+   * Busca os itens de um pedido específico
+   * @param id ID do pedido
+   */
+  async getOrderItems(id: string): Promise<OrderItemsResponse> {
+    const endpoint = `/order-items/order/${id}`;
+    console.log(`Buscando itens do pedido: ${id}`);
+    return this.get<OrderItemsResponse>(endpoint);
+  }
+
+  /**
+   * Cancela um pedido específico
+   * @param id ID do pedido
+   */
+  async cancelOrder(id: string): Promise<CancelOrderResponse> {
+    const endpoint = `/orders/${id}/cancel`;
+    console.log(`Cancelando pedido: ${id}`);
+    return this.patch<CancelOrderResponse>(endpoint);
+  }
+
+  // Método PATCH para cancelamento
+  async patch<T>(endpoint: string, data?: any): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'PATCH',
+      body: data ? JSON.stringify(data) : undefined,
+    });
   }
 }
 

@@ -40,6 +40,36 @@ export interface CreateOrderResponse {
   };
 }
 
+// Item do pedido
+export interface OrderItem {
+  id: string;
+  order_id: string;
+  product_id: string;
+  quantity: number;
+  price: string;
+  subtotal: string;
+  created_at: string;
+  product_name: string;
+  product_description: string;
+  product_image_url: string;
+}
+
+// Resposta dos itens do pedido
+export interface OrderItemsResponse {
+  success: boolean;
+  message: string;
+  data: {
+    items: OrderItem[];
+  };
+}
+
+// Resposta do cancelamento
+export interface CancelOrderResponse {
+  success: boolean;
+  message: string;
+  data?: any;
+}
+
 // Estados do contexto de pedidos
 export interface OrderState {
   orders: Order[];

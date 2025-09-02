@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import { apiService } from '../services/api';
-import { Order, CreateOrderRequest } from '../types/order';
+import { Order, CreateOrderRequest, OrderItem } from '../types/order';
 import { useOrderPersistence } from '../hooks/useOrderPersistence';
 
 export interface OrderState {
@@ -23,12 +23,14 @@ interface OrderContextType {
   createOrder: (shippingPrice: number) => Promise<Order>;
   fetchOrders: (page?: number) => Promise<void>;
   refreshOrders: () => Promise<void>;
+  getOrderItems: (orderId: string) => Promise<OrderItem[]>;
+  cancelOrder: (orderId: string) => Promise<void>;
 }
 
 const OrderContext = createContext<OrderContextType | undefined>(undefined);
 
 interface OrderAction {
-  type: 'SET_LOADING' | 'SET_ERROR' | 'SET_ORDERS' | 'CLEAR_ERROR' | 'ADD_ORDER';
+  type: 'SET_LOADING' | 'SET_ERROR' | 'SET_ORDERS' | 'CLEAR_ERROR' | 'ADD_ORDER' | 'UPDATE_ORDER';
   payload?: any;
 }
 
@@ -77,6 +79,15 @@ const orderReducer = (state: OrderReducerState, action: OrderAction): OrderReduc
           ...state.pagination,
           totalItems: state.pagination.totalItems + 1
         } : null
+      };
+    case 'UPDATE_ORDER':
+      return {
+        ...state,
+        loading: false,
+        error: null,
+        orders: state.orders.map(order => 
+          order.id === action.payload.id ? action.payload : order
+        )
       };
     case 'CLEAR_ERROR':
       return {
@@ -193,6 +204,61 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     await fetchOrders(state.pagination?.currentPage || 1);
   };
 
+  // Função para buscar itens de um pedido
+  const getOrderItems = async (orderId: string): Promise<OrderItem[]> => {
+    try {
+      const response = await apiService.getOrderItems(orderId);
+      
+      if (response.success && response.data?.items) {
+        return response.data.items;
+      } else {
+        throw new Error(response.message || 'Erro ao carregar itens do pedido');
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao carregar itens do pedido';
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
+      throw error;
+    }
+  };
+
+  // Função para cancelar um pedido
+  const cancelOrder = async (orderId: string): Promise<void> => {
+    try {
+      const response = await apiService.cancelOrder(orderId);
+      
+      if (response.success) {
+        // Atualizar o pedido na lista local (mudando status para cancelado)
+        const updatedOrders = state.orders.map(order => 
+          order.id === orderId 
+            ? { ...order, status: 'cancelado' as const, updated_at: new Date().toISOString() }
+            : order
+        );
+        
+        dispatch({ 
+          type: 'SET_ORDERS', 
+          payload: {
+            orders: updatedOrders,
+            pagination: state.pagination
+          }
+        });
+        
+        // Atualizar storage local
+        const orderState: OrderState = {
+          orders: updatedOrders,
+          totalOrders: state.pagination?.totalItems || 0,
+          currentPage: state.pagination?.currentPage || 1
+        };
+        saveOrders(orderState);
+      } else {
+        throw new Error(response.message || 'Erro ao cancelar pedido');
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao cancelar pedido';
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
+      throw error;
+    }
+  };
+
   // Carregar pedidos na inicialização
   useEffect(() => {
     fetchOrders();
@@ -205,7 +271,9 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     pagination: state.pagination,
     createOrder,
     fetchOrders,
-    refreshOrders
+    refreshOrders,
+    getOrderItems,
+    cancelOrder
   };
 
   return (
