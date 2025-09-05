@@ -35,7 +35,7 @@ class ApiService {
       ...options,
     };
 
-    console.log(`Fazendo requisição: ${this.baseUrl}${endpoint}`, { method: config.method || 'GET' });
+    //// console.log(`Fazendo requisição: ${this.baseUrl}${endpoint}`, { method: config.method || 'GET' });
 
     const response = await fetch(`${this.baseUrl}${endpoint}`, config);
     
@@ -52,7 +52,7 @@ class ApiService {
     }
 
     const data = await response.json();
-    console.log(`Resposta da requisição ${endpoint}:`, data);
+    //// console.log(`Resposta da requisição ${endpoint}:`, data);
     return data;
   }
 
@@ -100,13 +100,13 @@ class ApiService {
 
   async updateCartItem(productId: string, quantity: number): Promise<AddToCartResponse> {
     const endpoint = `${API_ENDPOINTS.CART}/${productId}`;
-    console.log(`Atualizando produto no carrinho: ${productId} com quantidade: ${quantity}`);
+    //// console.log(`Atualizando produto no carrinho: ${productId} com quantidade: ${quantity}`);
     return this.put<AddToCartResponse>(endpoint, { quantity });
   }
 
   async removeCartItem(productId: string): Promise<AddToCartResponse> {
     const endpoint = `${API_ENDPOINTS.CART}/${productId}`;
-    console.log(`Removendo produto do carrinho: ${productId}`);
+    //// console.log(`Removendo produto do carrinho: ${productId}`);
     return this.delete<AddToCartResponse>(endpoint);
   }
 
@@ -123,7 +123,7 @@ class ApiService {
    */
   async getOrders(page: number = 1, limit: number = 10): Promise<OrdersResponse> {
     const endpoint = `${API_ENDPOINTS.ORDERS}?page=${page}&limit=${limit}`;
-    console.log(`Buscando pedidos - página ${page}, limite ${limit}`);
+    //(`Buscando pedidos - página ${page}, limite ${limit}`);
     return this.get<OrdersResponse>(endpoint);
   }
 
@@ -132,7 +132,7 @@ class ApiService {
    * @param data Dados do pedido (preço do frete)
    */
   async createOrder(data: CreateOrderRequest): Promise<CreateOrderResponse> {
-    console.log('Criando novo pedido:', data);
+    //// console.log('Criando novo pedido:', data);
     // Note: O endpoint para criar pedido é POST /orders, não /orders/my
     return this.post<CreateOrderResponse>('/orders', data);
   }
@@ -143,7 +143,7 @@ class ApiService {
    */
   async getOrderById(id: string): Promise<CreateOrderResponse> {
     const endpoint = `/orders/${id}`;
-    console.log(`Buscando pedido por ID: ${id}`);
+    // console.log(`Buscando pedido por ID: ${id}`);
     return this.get<CreateOrderResponse>(endpoint);
   }
 
@@ -153,7 +153,7 @@ class ApiService {
    */
   async getOrderItems(id: string): Promise<OrderItemsResponse> {
     const endpoint = `/order-items/order/${id}`;
-    console.log(`Buscando itens do pedido: ${id}`);
+    // console.log(`Buscando itens do pedido: ${id}`);
     return this.get<OrderItemsResponse>(endpoint);
   }
 
@@ -163,7 +163,7 @@ class ApiService {
    */
   async cancelOrder(id: string): Promise<CancelOrderResponse> {
     const endpoint = `/orders/${id}/cancel`;
-    console.log(`Cancelando pedido: ${id}`);
+    // console.log(`Cancelando pedido: ${id}`);
     return this.patch<CancelOrderResponse>(endpoint);
   }
 

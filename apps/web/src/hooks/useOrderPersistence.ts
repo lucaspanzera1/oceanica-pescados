@@ -9,7 +9,7 @@ export const useOrderPersistence = () => {
   const saveOrders = (orderState: OrderState): void => {
     try {
       orderMemoryStorage = { ...orderState };
-      console.log('Pedidos salvos em memória:', orderState);
+      // console.log('Pedidos salvos em memória:', orderState);
     } catch (error) {
       console.error('Erro ao salvar pedidos:', error);
     }
@@ -37,7 +37,7 @@ export const useOrderPersistence = () => {
   const clearStoredOrders = (): void => {
     try {
       orderMemoryStorage = null;
-      console.log('Pedidos limpos da memória');
+      // console.log('Pedidos limpos da memória');
     } catch (error) {
       console.error('Erro ao limpar pedidos:', error);
     }
@@ -56,7 +56,7 @@ export const useOrderPersistence = () => {
   // Listener para mudanças nos pedidos (simulado)
   useEffect(() => {
     const handleOrderChange = () => {
-      console.log('Pedidos atualizados');
+      // console.log('Pedidos atualizados');
     };
 
     // Simular listener de mudanças

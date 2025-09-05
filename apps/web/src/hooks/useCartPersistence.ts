@@ -9,9 +9,9 @@ export const useCartPersistence = () => {
   const saveCart = (cartState: CartState): void => {
     try {
       cartMemoryStorage = { ...cartState };
-      console.log('Carrinho salvo em memória:', cartState);
+      // console.log('Carrinho salvo em memória:', cartState);
     } catch (error) {
-      console.error('Erro ao salvar carrinho:', error);
+      //console.error('Erro ao salvar carrinho:', error);
     }
   };
 
@@ -37,7 +37,7 @@ export const useCartPersistence = () => {
   const clearStoredCart = (): void => {
     try {
       cartMemoryStorage = null;
-      console.log('Carrinho limpo da memória');
+      //console.log('Carrinho limpo da memória');
     } catch (error) {
       console.error('Erro ao limpar carrinho:', error);
     }
@@ -56,7 +56,7 @@ export const useCartPersistence = () => {
   // Listener para mudanças no carrinho (simulado)
   useEffect(() => {
     const handleCartChange = () => {
-      console.log('Carrinho atualizado');
+      //console.log('Carrinho atualizado');
     };
 
     // Simular listener de mudanças
