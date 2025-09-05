@@ -10,7 +10,7 @@ class ProductController {
   }
 
   /**
-   * Valida se uma URL é válida
+   * Valida se uma URL é válida (apenas para URLs externas completas)
    * @param {string} url - URL para validar
    * @returns {boolean} True se for uma URL válida
    */
@@ -19,6 +19,12 @@ class ProductController {
       return true; // URLs vazias são aceitas (null)
     }
     
+    // Se começar com /, é um caminho local - aceitar
+    if (url.startsWith('/')) {
+      return true;
+    }
+    
+    // Caso contrário, validar como URL completa
     try {
       new URL(url);
       return true;
@@ -88,14 +94,18 @@ class ProductController {
       }
 
       // Cria o produto
-      const product = await this.productService.createProduct({
+      const productData = {
         name: name.trim(),
         description: description?.trim(),
         price: numericPrice,
         stock: numericStock,
-        image_url: image_url?.trim(),
-        image_url1: image_url1?.trim()
-      });
+        image_url: image_url || null,
+        image_url1: image_url1 || null,
+      };
+      
+      console.log('Dados do produto para criar:', productData);
+      
+      const product = await this.productService.createProduct(productData);
 
       res.status(201).json({
         success: true,

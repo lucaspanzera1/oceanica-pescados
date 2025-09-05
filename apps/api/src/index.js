@@ -4,6 +4,8 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const compression = require('compression');
 require('dotenv').config();
+const path = require('path');
+
 
 // Importações locais
 const { testConnection, initializeDatabase, closePool } = require('./database/config');
@@ -59,6 +61,7 @@ class Server {
     this.app.use('/orders', limiter);
     this.app.use('/order-items', limiter);
     this.app.use('/addresses', limiter);
+     this.app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
     
     // CORS - permite requisições de diferentes origens
     const allowedOrigins = process.env.ALLOWED_ORIGINS 
