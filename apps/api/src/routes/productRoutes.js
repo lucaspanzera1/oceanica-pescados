@@ -37,6 +37,36 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 /**
+ * Middleware para processar upload de imagens
+ */
+const processImageUploads = (req, res, next) => {
+  // Monta as URLs locais das imagens
+  if (req.files && req.files.length > 0) {
+    // Mapeia os arquivos recebidos para os campos esperados
+    const fileMap = {};
+    req.files.forEach(file => {
+      fileMap[file.fieldname] = file;
+    });
+    
+    // Mapeia para os nomes esperados pelo controller
+    if (fileMap['image1'] || fileMap['image_url']) {
+      const file = fileMap['image1'] || fileMap['image_url'];
+      req.body.image_url = `/uploads/products/${file.filename}`;
+    }
+    
+    if (fileMap['image2'] || fileMap['image_url1']) {
+      const file = fileMap['image2'] || fileMap['image_url1'];
+      req.body.image_url1 = `/uploads/products/${file.filename}`;
+    }
+    
+    // Log para debug - remova depois de funcionar
+    console.log('Arquivos recebidos:', req.files.map(f => f.fieldname));
+    console.log('URLs montadas:', { image_url: req.body.image_url, image_url1: req.body.image_url1 });
+  }
+  next();
+};
+
+/**
  * Rotas de produtos (públicas)
  */
 router.get('/', controller.listProducts);       // Lista produtos
@@ -45,42 +75,22 @@ router.get('/:id', controller.getProductById); // Busca produto por ID
 /**
  * Rotas protegidas - apenas para administradores
  */
+
+// POST - Criar produto com upload de imagens
 router.post('/',
   authenticateToken,
   requireAdmin,
   upload.any(), // Aceita qualquer campo de arquivo
-  (req, res, next) => {
-    // Monta as URLs locais das imagens
-    if (req.files && req.files.length > 0) {
-      // Mapeia os arquivos recebidos para os campos esperados
-      const fileMap = {};
-      req.files.forEach(file => {
-        fileMap[file.fieldname] = file;
-      });
-      
-      // Mapeia para os nomes esperados pelo controller
-      if (fileMap['image1'] || fileMap['image_url']) {
-        const file = fileMap['image1'] || fileMap['image_url'];
-        req.body.image_url = `/uploads/products/${file.filename}`;
-      }
-      
-      if (fileMap['image2'] || fileMap['image_url1']) {
-        const file = fileMap['image2'] || fileMap['image_url1'];
-        req.body.image_url1 = `/uploads/products/${file.filename}`;
-      }
-      
-      // Log para debug - remova depois de funcionar
-      console.log('Arquivos recebidos:', req.files.map(f => f.fieldname));
-      console.log('URLs montadas:', { image_url: req.body.image_url, image_url1: req.body.image_url1 });
-    }
-    next();
-  },
+  processImageUploads,
   controller.createProduct
 );
 
+// PUT - Atualizar produto (com suporte a upload de imagens)
 router.put('/:id',
   authenticateToken,
   requireAdmin,
+  upload.any(), // Aceita qualquer campo de arquivo
+  processImageUploads,
   controller.updateProduct
 );
 
