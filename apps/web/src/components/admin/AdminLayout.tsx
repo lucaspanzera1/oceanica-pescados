@@ -1,4 +1,3 @@
-// components/admin/AdminLayout.tsx
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -52,7 +51,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             </Link>
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600">
-                Olá, {user?.name}
+                Olá, {user?.email?.split('@')[0] || 'Usuário'}
               </span>
               <button
                 onClick={handleLogout}
