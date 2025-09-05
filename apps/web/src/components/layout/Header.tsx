@@ -204,7 +204,7 @@ export const Header: React.FC = () => {
             
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-3 group">
-              <img src="logo_oceanica.fw_.webp" alt="Logo" width="100px" />
+              <img src="/logo_oceanica.fw_.webp" alt="Logo" width="100px" />
             </Link>
 
             {/* Desktop Navigation */}

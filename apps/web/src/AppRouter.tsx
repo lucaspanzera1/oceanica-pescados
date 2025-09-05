@@ -1,3 +1,4 @@
+// AppRouter.tsx
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
@@ -6,8 +7,9 @@ import { OrderProvider } from './context/OrderContext';
 import { ToastProvider } from './context/ToastContext';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { PublicRoute } from './components/common/PublicRoute';
+import { AdminRoute } from './components/common/AdminRoute';
 
-// Pages
+// Pages - Cliente
 import { Home } from './pages/Home';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
@@ -16,6 +18,14 @@ import { Products } from './pages/Products';
 import { ProductDetail } from './pages/ProductDetail';
 import { Cart } from './pages/Cart';
 import { Orders } from './pages/Orders';
+
+// Pages - Admin
+import { AdminDashboard } from './pages/admin/AdminDashboard';
+import { AdminProducts } from './pages/admin/AdminProducts';
+import { AdminOrders } from './pages/admin/AdminOrders';
+import { AdminUsers } from './pages/admin/AdminUsers';
+import { AdminReports } from './pages/admin/AdminReports';
+import { AdminLayout } from './components/admin/AdminLayout';
 
 import { ToastContainer } from './components/ToastContainer';
 
@@ -27,7 +37,9 @@ export const AppRouter: React.FC = () => {
           <CartProvider>
             <OrderProvider>
               <Routes>
-                {/* Rota pública - página inicial (sempre acessível) */}
+                {/* ==================== ROTAS PÚBLICAS ==================== */}
+                
+                {/* Rota pública - página inicial */}
                 <Route
                   path="/"
                   element={
@@ -37,7 +49,7 @@ export const AppRouter: React.FC = () => {
                   }
                 />
                 
-                {/* Rota de produtos específico */}
+                {/* Rota de produto específico */}
                 <Route
                   path="/produtos/:id"
                   element={
@@ -57,17 +69,7 @@ export const AppRouter: React.FC = () => {
                   }
                 />
 
-                {/* NOVA ROTA - Página de pedidos (protegida) */}
-                <Route
-                  path="/orders"
-                  element={
-                    <ProtectedRoute>
-                      <Orders />
-                    </ProtectedRoute>
-                  }
-                />
-
-                {/* Rota pública - login (restrita para usuários logados) */}
+                {/* Login e Register */}
                 <Route
                   path="/login"
                   element={
@@ -77,7 +79,6 @@ export const AppRouter: React.FC = () => {
                   }
                 />
                 
-                {/* Rota pública - register (restrita para usuários logados) */}
                 <Route
                   path="/register"
                   element={
@@ -86,8 +87,10 @@ export const AppRouter: React.FC = () => {
                     </PublicRoute>
                   }
                 />
-              
-                {/* Rota protegida - dashboard (somente para logados) */}
+
+                {/* ==================== ROTAS PROTEGIDAS - USUÁRIO ==================== */}
+                
+                {/* Dashboard do usuário */}
                 <Route
                   path="/dashboard"
                   element={
@@ -97,10 +100,43 @@ export const AppRouter: React.FC = () => {
                   }
                 />
 
+                {/* Pedidos do usuário */}
+                <Route
+                  path="/orders"
+                  element={
+                    <ProtectedRoute>
+                      <Orders />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* ==================== ROTAS ADMINISTRATIVAS ==================== */}
+                
+                {/* Layout administrativo com sub-rotas */}
+                <Route
+                  path="/admin/*"
+                  element={
+                    <AdminRoute>
+                      <AdminLayout>
+                        <Routes>
+                          <Route index element={<AdminDashboard />} />
+                          <Route path="products" element={<AdminProducts />} />
+                          <Route path="orders" element={<AdminOrders />} />
+                          <Route path="users" element={<AdminUsers />} />
+                          <Route path="reports" element={<AdminReports />} />
+                          {/* Redireciona rotas admin não encontradas */}
+                          <Route path="*" element={<Navigate to="/admin" replace />} />
+                        </Routes>
+                      </AdminLayout>
+                    </AdminRoute>
+                  }
+                />
+
+                {/* ==================== FALLBACK ==================== */}
+                
                 {/* Redireciona rotas não encontradas para home */}
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
-
               <ToastContainer />
             </OrderProvider>
           </CartProvider>
