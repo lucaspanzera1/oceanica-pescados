@@ -25,7 +25,7 @@ import { AdminProducts } from './pages/admin/AdminProducts';
 import { AdminOrders } from './pages/admin/AdminOrders';
 import { AdminUsers } from './pages/admin/AdminUsers';
 import { AdminReports } from './pages/admin/AdminReports';
-import { AdminLayout } from './components/admin/AdminLayout';
+import { AdminLayout } from './components/admin/layout/AdminLayout';
 import ProductForm from './components/admin/products/ProductForm';
 
 import { ToastContainer } from './components/ToastContainer';

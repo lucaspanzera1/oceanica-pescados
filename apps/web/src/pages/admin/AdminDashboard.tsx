@@ -1,5 +1,11 @@
-// pages/admin/AdminDashboard.tsx
 import React, { useState, useEffect } from 'react';
+import { 
+  Users,
+  ShoppingCart,
+  Package,
+  DollarSign,
+  RefreshCw
+} from 'lucide-react';
 
 interface DashboardStats {
   totalUsers: number;
@@ -52,68 +58,74 @@ export const AdminDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
+      <div className="space-y-6">
+      <div className="flex justify-end">
         <button
           onClick={fetchDashboardStats}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
+          <RefreshCw className="h-4 w-4 mr-2" />
           Atualizar
         </button>
-      </div>
-
-      {/* Cards de Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total de Usuários</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {stats?.totalUsers || 0}
-              </p>
+      </div>        {/* Cards de Estatísticas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total de Usuários</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {stats?.totalUsers || 0}
+                </p>
+              </div>
+              <div className="p-3 bg-blue-50 rounded-full">
+                <Users className="h-6 w-6 text-blue-600" />
+              </div>
             </div>
-            <div className="text-3xl">👥</div>
           </div>
-        </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total de Pedidos</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {stats?.totalOrders || 0}
-              </p>
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total de Pedidos</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {stats?.totalOrders || 0}
+                </p>
+              </div>
+              <div className="p-3 bg-green-50 rounded-full">
+                <ShoppingCart className="h-6 w-6 text-green-600" />
+              </div>
             </div>
-            <div className="text-3xl">🛒</div>
           </div>
-        </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total de Produtos</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {stats?.totalProducts || 0}
-              </p>
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total de Produtos</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {stats?.totalProducts || 0}
+                </p>
+              </div>
+              <div className="p-3 bg-orange-50 rounded-full">
+                <Package className="h-6 w-6 text-orange-600" />
+              </div>
             </div>
-            <div className="text-3xl">📦</div>
           </div>
-        </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Receita Total</p>
-              <p className="text-2xl font-bold text-gray-900">
-                R$ {stats?.totalRevenue?.toLocaleString('pt-BR', {
-                  minimumFractionDigits: 2
-                }) || '0,00'}
-              </p>
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Receita Total</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  R$ {stats?.totalRevenue?.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2
+                  }) || '0,00'}
+                </p>
+              </div>
+              <div className="p-3 bg-purple-50 rounded-full">
+                <DollarSign className="h-6 w-6 text-purple-600" />
+              </div>
             </div>
-            <div className="text-3xl">💰</div>
           </div>
-        </div>
       </div>
 
       {/* Pedidos Recentes */}
@@ -182,6 +194,6 @@ export const AdminDashboard: React.FC = () => {
           </table>
         </div>
       </div>
-    </div>
+          </div>
   );
 };
