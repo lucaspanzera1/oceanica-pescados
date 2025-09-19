@@ -26,6 +26,7 @@ import { AdminOrders } from './pages/admin/AdminOrders';
 import { AdminUsers } from './pages/admin/AdminUsers';
 import { AdminReports } from './pages/admin/AdminReports';
 import { AdminLayout } from './components/admin/AdminLayout';
+import ProductForm from './components/admin/products/ProductForm';
 
 import { ToastContainer } from './components/ToastContainer';
 
@@ -121,6 +122,8 @@ export const AppRouter: React.FC = () => {
                         <Routes>
                           <Route index element={<AdminDashboard />} />
                           <Route path="products" element={<AdminProducts />} />
+                          <Route path="products/new" element={<ProductForm />} />
+                          <Route path="products/edit/:id" element={<ProductForm />} />
                           <Route path="orders" element={<AdminOrders />} />
                           <Route path="users" element={<AdminUsers />} />
                           <Route path="reports" element={<AdminReports />} />

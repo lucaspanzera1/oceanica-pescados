@@ -26,9 +26,11 @@ class ApiService {
       console.warn('localStorage não disponível:', error);
     }
     
+    const isFormData = options.body instanceof FormData;
+
     const config: RequestInit = {
       headers: {
-        'Content-Type': 'application/json',
+        ...(!isFormData && { 'Content-Type': 'application/json' }),
         ...(token && { Authorization: `Bearer ${token}` }),
         ...options.headers,
       },
@@ -61,17 +63,33 @@ class ApiService {
   }
 
   async post<T>(endpoint: string, data?: any): Promise<T> {
-    return this.request<T>(endpoint, {
+    const options: RequestInit = {
       method: 'POST',
-      body: JSON.stringify(data),
-    });
+      body: data instanceof FormData ? data : JSON.stringify(data),
+    };
+    
+    if (!(data instanceof FormData)) {
+      options.headers = {
+        'Content-Type': 'application/json',
+      };
+    }
+    
+    return this.request<T>(endpoint, options);
   }
 
   async put<T>(endpoint: string, data?: any): Promise<T> {
-    return this.request<T>(endpoint, {
+    const options: RequestInit = {
       method: 'PUT',
-      body: JSON.stringify(data),
-    });
+      body: data instanceof FormData ? data : JSON.stringify(data),
+    };
+    
+    if (!(data instanceof FormData)) {
+      options.headers = {
+        'Content-Type': 'application/json',
+      };
+    }
+    
+    return this.request<T>(endpoint, options);
   }
 
   async delete<T>(endpoint: string): Promise<T> {

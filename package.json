@@ -6,7 +6,8 @@
   "scripts": {
     "build": "turbo run build",
     "start": "turbo run start",
-    "dev": "turbo run dev --parallel"
+    "dev": "turbo run dev --parallel",
+    "dev:db": "./scripts/dev-with-db.sh"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.21",
