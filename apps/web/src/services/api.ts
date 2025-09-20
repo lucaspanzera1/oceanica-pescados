@@ -173,6 +173,16 @@ class ApiService {
     return this.patch<CancelOrderResponse>(endpoint);
   }
 
+  /**
+   * Atualiza o status de um pedido (apenas admin)
+   * @param id ID do pedido
+   * @param status Novo status ('confirmado', 'enviado', 'cancelado')
+   */
+  async updateOrderStatus(id: string, status: string): Promise<CancelOrderResponse> {
+    const endpoint = `/orders/${id}/status`;
+    return this.patch<CancelOrderResponse>(endpoint, { status });
+  }
+
   // Método PATCH para cancelamento
   async patch<T>(endpoint: string, data?: any): Promise<T> {
     return this.request<T>(endpoint, {

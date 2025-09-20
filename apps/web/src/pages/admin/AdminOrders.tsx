@@ -13,10 +13,14 @@ export function AdminOrders() {
     fetchOrders();
   }, []);
 
-  const updateOrderStatus = async (orderId: string, status: 'confirmado' | 'cancelado') => {
+  const updateOrderStatus = async (orderId: string, status: 'confirmado' | 'enviado' | 'cancelado') => {
     try {
       setUpdatingOrderId(orderId);
-      await apiService.put(`/orders/${orderId}`, { status });
+      if (status === 'cancelado') {
+        await apiService.cancelOrder(orderId);
+      } else {
+        await apiService.updateOrderStatus(orderId, status);
+      }
       await fetchOrders();
       toast.success(`Pedido ${status} com sucesso!`);
     } catch (err) {
@@ -61,6 +65,24 @@ export function AdminOrders() {
                         className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
                       >
                         Confirmar
+                      </button>
+                      <button
+                        onClick={() => updateOrderStatus(order.id, 'cancelado')}
+                        disabled={updatingOrderId === order.id}
+                        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
+                      >
+                        Cancelar
+                      </button>
+                    </>
+                  )}
+                  {order.status === 'confirmado' && (
+                    <>
+                      <button
+                        onClick={() => updateOrderStatus(order.id, 'enviado')}
+                        disabled={updatingOrderId === order.id}
+                        className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                      >
+                        Marcar como Enviado
                       </button>
                       <button
                         onClick={() => updateOrderStatus(order.id, 'cancelado')}
