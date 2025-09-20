@@ -188,6 +188,26 @@ class AuthService {
       throw new Error('Token inválido');
     }
   }
+
+  /**
+   * Lista todos os clientes com nome e telefone
+   * @returns {Promise<Array>} Lista de clientes
+   */
+  async listClientsBasicInfo() {
+    try {
+      const query = `
+        SELECT name, phone 
+        FROM users 
+        WHERE role = 'cliente'
+        ORDER BY name ASC
+      `;
+      const result = await pool.query(query);
+      return result.rows;
+    } catch (error) {
+      console.error('Erro ao listar clientes:', error.message);
+      throw error;
+    }
+  }
 }
 
 module.exports = AuthService;

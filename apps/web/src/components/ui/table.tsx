@@ -22,6 +22,12 @@ export const TableHead = ({ children }: { children: React.ReactNode }) => (
   <th className="h-12 px-4 text-left align-middle font-medium text-slate-500">{children}</th>
 );
 
-export const TableCell = ({ children }: { children: React.ReactNode }) => (
-  <td className="p-4 align-middle">{children}</td>
+interface TableCellProps {
+  children: React.ReactNode;
+  className?: string;
+  colSpan?: number;
+}
+
+export const TableCell = ({ children, className = '', colSpan }: TableCellProps) => (
+  <td className={`p-4 align-middle ${className}`} colSpan={colSpan}>{children}</td>
 );

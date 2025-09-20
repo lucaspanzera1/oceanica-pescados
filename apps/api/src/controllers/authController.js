@@ -221,6 +221,40 @@ res.status(201).json({
       });
     }
   }
+
+  /**
+   * GET /auth/clients
+   * Lista todos os clientes (apenas nome e telefone)
+   * Rota protegida - apenas admin
+   */
+  async listClients(req, res) {
+    try {
+      // Verifica se o usuário é admin (middleware já fez isso, mas vamos garantir)
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: 'Acesso negado. Apenas administradores podem listar clientes.'
+        });
+      }
+
+      const clients = await authService.listClientsBasicInfo();
+      
+      res.json({
+        success: true,
+        message: 'Clientes listados com sucesso',
+        data: {
+          clients
+        }
+      });
+
+    } catch (error) {
+      console.error('Erro ao listar clientes:', error.message);
+      res.status(500).json({
+        success: false,
+        message: 'Erro interno do servidor'
+      });
+    }
+  }
 }
 
 module.exports = new AuthController();

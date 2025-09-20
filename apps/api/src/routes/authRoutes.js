@@ -20,6 +20,9 @@ router.post('/verify-token', authController.verifyToken);
 // GET /auth/profile - Obter perfil do usuário autenticado
 router.get('/profile', authenticateToken, authController.getProfile);
 
+// GET /auth/clients - Listar todos os clientes (apenas nome e telefone)
+router.get('/clients', authenticateToken, requireAdmin, authController.listClients);
+
 /**
  * Rotas protegidas - exemplos de uso dos middlewares
  */
