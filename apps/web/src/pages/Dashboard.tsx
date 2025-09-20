@@ -31,10 +31,11 @@ export const Dashboard: React.FC = () => {
               Informações do Usuário
             </h2>
             <div className="space-y-2 text-sm">
-              <p><strong>ID:</strong> {user?.id}</p>
+              <p><strong>Nome:</strong> {user?.name}</p>
               <p><strong>Email:</strong> {user?.email}</p>
-              <p><strong>Role:</strong> {user?.role}</p>
-              <p><strong>Criado em:</strong> {user?.created_at ? new Date(user.created_at).toLocaleDateString('pt-BR') : ''}</p>
+              <p><strong>Telefone:</strong> {user?.phone || 'Não informado'}</p>
+              <p><strong>Tipo:</strong> {user?.role === 'admin' ? 'Administrador' : 'Cliente'}</p>
+              <p><strong>Criado em:</strong> {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('pt-BR') : ''}</p>
             </div>
           </Card>
 

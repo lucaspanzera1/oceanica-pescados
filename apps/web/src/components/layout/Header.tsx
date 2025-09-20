@@ -136,14 +136,15 @@ export const Header: React.FC = () => {
                     <User className="h-3 w-3" />
                     {/* nome aparece só em desktop */}
                     <span className="hidden sm:inline text-xs">
-                      Olá, {user?.email?.split('@')[0] || 'Usuário'}
+                      Olá, {user?.name?.split(' ')[0] || 'Usuário'}
                     </span>
                   </button>
 
                   {isUserMenuOpen && (
                     <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 z-50 border">
                       <div className="px-4 py-2 text-xs text-gray-500 border-b border-gray-100">
-                        <div className="font-medium text-gray-900">{user?.email}</div>
+                        <div className="font-medium text-gray-900">{user?.name}</div>
+                        <div className="text-gray-500">{user?.email}</div>
                         <div className="capitalize">{user?.role}</div>
                       </div>
                       

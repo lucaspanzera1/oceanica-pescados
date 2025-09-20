@@ -11,10 +11,12 @@ class AuthService {
    * Cria um novo usuário no sistema
    * @param {string} email - Email do usuário
    * @param {string} password - Senha em texto plano
+   * @param {string} name - Nome do usuário
+   * @param {string} phone - Telefone do usuário
    * @param {string} role - Função do usuário (cliente ou admin)
    * @returns {Object} Dados do usuário criado (sem a senha)
    */
-  async createUser(email, password, role = 'cliente') {
+  async createUser(email, password, name, phone, role = 'cliente') {
   try {
     // Verifica se o email já existe
     const existingUser = await this.findUserByEmail(email);
@@ -28,11 +30,11 @@ class AuthService {
 
     // Insere o usuário no banco
     const query = `
-      INSERT INTO users (email, password, role) 
-      VALUES ($1, $2, $3) 
-      RETURNING id, email, role, created_at
+      INSERT INTO users (email, password, name, phone, role) 
+      VALUES ($1, $2, $3, $4, $5) 
+      RETURNING id, email, name, phone, role, created_at
     `;
-    const result = await pool.query(query, [email, hashedPassword, role]);
+    const result = await pool.query(query, [email, hashedPassword, name, phone, role]);
     const user = result.rows[0];
 
     // Gera o token JWT para o usuário recém-criado
@@ -107,8 +109,8 @@ class AuthService {
   async findUserByEmail(email, includePassword = false) {
     try {
       const fields = includePassword 
-        ? 'id, email, password, role, created_at, updated_at'
-        : 'id, email, role, created_at, updated_at';
+        ? 'id, email, password, name, phone, role, created_at, updated_at'
+        : 'id, email, name, phone, role, created_at, updated_at';
         
       const query = `SELECT ${fields} FROM users WHERE email = $1`;
       const result = await pool.query(query, [email]);

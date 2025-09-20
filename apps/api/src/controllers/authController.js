@@ -12,13 +12,13 @@ class AuthController {
    */
   async register(req, res) {
     try {
-      const { email, password, role } = req.body;
+      const { email, password, name, phone, role } = req.body;
 
       // Validações básicas
-      if (!email || !password) {
+      if (!email || !password || !name) {
         return res.status(400).json({
           success: false,
-          message: 'Email e senha são obrigatórios'
+          message: 'Email, senha e nome são obrigatórios'
         });
       }
 
@@ -39,6 +39,25 @@ class AuthController {
         });
       }
 
+      // Validação do nome
+      if (name.length < 3) {
+        return res.status(400).json({
+          success: false,
+          message: 'Nome deve ter pelo menos 3 caracteres'
+        });
+      }
+
+      // Validação do telefone
+      if (phone) {
+        const phoneRegex = /^[0-9]{10,11}$/;
+        if (!phoneRegex.test(phone.replace(/\D/g, ''))) {
+          return res.status(400).json({
+            success: false,
+            message: 'Formato de telefone inválido. Use apenas números (10 ou 11 dígitos)'
+          });
+        }
+      }
+
       // Validação do role (se fornecido)
       const allowedRoles = ['cliente', 'admin'];
       const userRole = role || 'cliente';
@@ -51,7 +70,7 @@ class AuthController {
       }
 
       // Cria o usuário
-      const { user, token } = await authService.createUser(email, password, userRole);
+      const { user, token } = await authService.createUser(email, password, name, phone, userRole);
 
 res.status(201).json({
   success: true,
