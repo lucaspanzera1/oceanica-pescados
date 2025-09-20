@@ -22,6 +22,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const isAuthenticated = !!user && !!token;
+  
+  // Nova funcionalidade: verificar se o usuário é admin
+  const isAdmin = user?.role === 'admin' || user?.role === 'ADMIN';
 
   useEffect(() => {
     const initAuth = async () => {
@@ -108,6 +111,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     loading,
     isAuthenticated,
+    isAdmin, // Nova propriedade adicionada
   };
 
   return (

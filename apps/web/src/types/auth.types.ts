@@ -1,9 +1,9 @@
 export interface User {
   id: string;
   email: string;
-  role: string;
-  created_at: string;
-  updated_at: string;
+  role: 'cliente' | 'admin' | 'ADMIN' | 'USER'; // Incluindo possíveis variações
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface LoginRequest {
@@ -32,10 +32,13 @@ export interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<boolean>;
+  register: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   loading: boolean;
   isAuthenticated: boolean;
+  isAdmin: boolean; // Nova propriedade adicionada
 }
+
 
 export interface RegisterRequest {
   email: string;

@@ -4,6 +4,8 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const compression = require('compression');
 require('dotenv').config();
+const path = require('path');
+
 
 // Importações locais
 const { testConnection, initializeDatabase, closePool } = require('./database/config');
@@ -43,7 +45,7 @@ class Server {
     // Rate limiting
     const limiter = rateLimit({
       windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutos
-      max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // máximo de requests
+      max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 10000, // máximo de requests
       message: {
         success: false,
         message: 'Muitas tentativas. Tente novamente em alguns minutos.',
@@ -59,18 +61,20 @@ class Server {
     this.app.use('/orders', limiter);
     this.app.use('/order-items', limiter);
     this.app.use('/addresses', limiter);
+     this.app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
     
     // CORS - permite requisições de diferentes origens
-    const allowedOrigins = process.env.ALLOWED_ORIGINS 
-      ? process.env.ALLOWED_ORIGINS.split(',')
-      : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173'];
-      
-    this.app.use(cors({
-      origin: allowedOrigins,
-      credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
-    }));
+   const allowedOrigins = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173'];
+
+this.app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
+
 
     // Parser de JSON
     this.app.use(express.json({ 

@@ -14,14 +14,15 @@ import {
   Package,
   Waves,
   Facebook,
-  Instagram
+  Instagram,
+  Settings
 } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, isAdmin } = useAuth(); 
   const { totalItems } = useCart();
   const location = useLocation();
   const navigate = useNavigate();
@@ -169,6 +170,17 @@ export const Header: React.FC = () => {
                         <Package className="h-4 w-4" />
                         <span>Meus Pedidos</span>
                       </Link>
+
+                      {/* Link Admin - só aparece se for admin */}
+                      {isAdmin && (
+                  <Link
+                        to="/admin"
+                        className="block px-4 py-2 text-sm text-blue-700 hover:bg-blue-100 hover:text-blue-900 flex items-center space-x-2"
+                      >
+                        <Settings className="h-4 w-4" />
+                        <span>Painel</span>
+                      </Link>
+                      )}
                       
                       <div className="border-t border-gray-100 mt-1">
                         <button
@@ -204,7 +216,7 @@ export const Header: React.FC = () => {
             
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-3 group">
-              <img src="logo_oceanica.fw_.webp" alt="Logo" width="100px" />
+              <img src="/logo_oceanica.fw_.webp" alt="Logo" width="100px" />
             </Link>
 
             {/* Desktop Navigation */}

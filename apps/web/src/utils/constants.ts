@@ -13,7 +13,7 @@ export const ROUTES = {
   PRODUCTS: '/products',
   PRODUCT_DETAIL: '/products/:id',
   CART: '/cart',
-  ORDERS: '/orders', // Nova rota para pedidos
+  ORDERS: '/orders/my', // Nova rota para pedidos
 } as const;
 
 export const STORAGE_KEYS = {

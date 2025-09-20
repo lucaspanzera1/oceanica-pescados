@@ -1,7 +1,7 @@
 export interface Order {
   id: string;
   user_id: string;
-  status: 'pendente' | 'processando' | 'enviado' | 'entregue' | 'cancelado';
+  status: 'pendente' | 'confirmado' | 'enviado' | 'cancelado';
   shipping_price: string;
   total_price: string;
   created_at: string;
@@ -38,6 +38,52 @@ export interface CreateOrderResponse {
   data?: {
     order: Order;
   };
+}
+
+// Item do pedido
+export interface OrderItem {
+  id: string;
+  order_id: string;
+  product_id: string;
+  quantity: number;
+  price: string;
+  subtotal: string;
+  created_at: string;
+  product_name: string;
+  product_description: string;
+  product_image_url: string;
+}
+
+// Resposta dos itens do pedido
+export interface OrderItemsResponse {
+  success: boolean;
+  message: string;
+  data: {
+    items: OrderItem[];
+  };
+}
+
+// Resposta do cancelamento
+export interface CancelOrderResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    order: Order;
+  };
+}
+
+// Resposta da atualização de status
+export interface UpdateOrderStatusResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    order: Order;
+  };
+}
+
+// Requisição de atualização de status
+export interface UpdateOrderStatusRequest {
+  status: 'confirmado' | 'enviado' | 'cancelado';
 }
 
 // Estados do contexto de pedidos
