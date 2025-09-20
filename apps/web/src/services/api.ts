@@ -65,14 +65,8 @@ class ApiService {
   async post<T>(endpoint: string, data?: any): Promise<T> {
     const options: RequestInit = {
       method: 'POST',
-      body: data instanceof FormData ? data : JSON.stringify(data),
+      body: data instanceof FormData ? data : JSON.stringify(data)
     };
-    
-    if (!(data instanceof FormData)) {
-      options.headers = {
-        'Content-Type': 'application/json',
-      };
-    }
     
     return this.request<T>(endpoint, options);
   }
@@ -80,14 +74,8 @@ class ApiService {
   async put<T>(endpoint: string, data?: any): Promise<T> {
     const options: RequestInit = {
       method: 'PUT',
-      body: data instanceof FormData ? data : JSON.stringify(data),
+      body: data instanceof FormData ? data : JSON.stringify(data)
     };
-    
-    if (!(data instanceof FormData)) {
-      options.headers = {
-        'Content-Type': 'application/json',
-      };
-    }
     
     return this.request<T>(endpoint, options);
   }

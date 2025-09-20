@@ -82,9 +82,6 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
                   alt="Oceanica Admin"
                   className="h-8 w-auto"
                 />
-                <span className="ml-3 text-xl font-semibold text-blue-600 hidden sm:block">
-                  Admin
-                </span>
               </Link>
             </div>
 
