@@ -21,6 +21,11 @@ const bindController = (controller) => {
 const controller = bindController(orderController);
 
 /**
+ * Rota pública para criar pedido simplificado
+ */
+router.post('/simple', controller.createSimpleOrder);
+
+/**
  * Rotas protegidas - usuários autenticados
  */
 

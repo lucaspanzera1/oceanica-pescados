@@ -10,6 +10,62 @@ class OrderController {
   }
 
   /**
+   * POST /orders/simple
+   * Cria um novo pedido simplificado apenas com produto, nome e telefone
+   */
+  async createSimpleOrder(req, res) {
+    try {
+      const { productId, username, phone } = req.body;
+
+      // Validações básicas
+      if (!productId || !username || !phone) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID do produto, nome e telefone são obrigatórios'
+        });
+      }
+
+      // Validar se é um UUID válido
+      if (!this.orderService.isValidUUID(productId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID do produto inválido'
+        });
+      }
+
+      const order = await this.orderService.createSimpleOrder({
+        productId,
+        username,
+        phone
+      });
+
+      res.status(201).json({
+        success: true,
+        message: 'Pedido criado com sucesso',
+        data: { order }
+      });
+
+    } catch (error) {
+      logError(error, req);
+
+      if (error.message.includes('não encontrado') ||
+          error.message.includes('Estoque insuficiente') ||
+          error.message.includes('obrigatório') ||
+          error.message.includes('inválido')) {
+        return res.status(400).json({
+          success: false,
+          message: error.message
+        });
+      }
+
+      res.status(500).json({
+        success: false,
+        message: 'Erro interno do servidor'
+      });
+    }
+  }
+
+  /**
    * POST /orders
    * Cria um novo pedido a partir do carrinho do usuário
    */

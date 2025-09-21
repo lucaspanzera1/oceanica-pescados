@@ -11,6 +11,118 @@ class OrderService {
   }
 
   /**
+   * Cria um pedido simplificado com apenas um produto
+   * @param {Object} data - Dados do pedido {productId, username, phone}
+   * @returns {Object} Dados do pedido criado
+   */
+  async createSimpleOrder(data) {
+    const client = await pool.connect();
+    
+    try {
+      await client.query('BEGIN');
+
+      const { productId, username, phone } = data;
+
+      // Buscar produto e validar estoque
+      const productQuery = `
+        SELECT id, name, price, stock
+        FROM products
+        WHERE id = $1
+      `;
+      
+      const productResult = await client.query(productQuery, [productId]);
+      
+      if (productResult.rows.length === 0) {
+        throw new Error('Produto não encontrado');
+      }
+
+      const product = productResult.rows[0];
+
+      // Validar estoque
+      if (product.stock < 1) {
+        throw new Error(`Estoque insuficiente para o produto "${product.name}"`);
+      }
+
+      // Criar usuário temporário
+      const sanitizedPhone = phone.replace(/\D/g, '');
+      const tempEmail = `temp_${sanitizedPhone}@temp.oceanica.local`;
+      const tempPassword = `temp_${Math.random().toString(36).slice(2)}${Date.now()}`;
+      
+      const userQuery = `
+        INSERT INTO users (name, phone, email, password, role)
+        VALUES ($1, $2, $3, $4, 'customer')
+        RETURNING id
+      `;
+      
+      const userResult = await client.query(userQuery, [
+        username,
+        phone,
+        tempEmail,
+        tempPassword
+      ]);
+      
+      const userId = userResult.rows[0].id;
+
+      // Criar o pedido
+      const totalPrice = parseFloat(product.price);
+      
+      const orderQuery = `
+        INSERT INTO orders (user_id, shipping_price, total_price) 
+        VALUES ($1, $2, $3) 
+        RETURNING id, user_id, status, shipping_price, total_price, created_at, updated_at
+      `;
+      
+      const orderResult = await client.query(orderQuery, [
+        userId,
+        0, // sem frete
+        totalPrice
+      ]);
+      
+      const order = orderResult.rows[0];
+
+      // Criar item do pedido
+      const orderItem = {
+        product_id: productId,
+        quantity: 1,
+        price: parseFloat(product.price)
+      };
+
+      // Commit da transação atual para usar o OrderItemService
+      await client.query('COMMIT');
+      
+      // Usar o OrderItemService para criar o item
+      const orderItems = await this.orderItemService.createOrderItems(order.id, [orderItem]);
+
+      // Nova transação para atualizar estoque
+      await client.query('BEGIN');
+
+      // Atualizar estoque do produto
+      await client.query(
+        'UPDATE products SET stock = stock - 1, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
+        [productId]
+      );
+
+      await client.query('COMMIT');
+
+      return {
+        ...order,
+        items: orderItems,
+        total_products: totalPrice,
+        customer: {
+          name: username,
+          phone
+        }
+      };
+      
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
    * Cria um pedido externo (sem necessidade de usuário ou endereço cadastrado)
    */
   async createExternalOrder(items, customer, shipping_price = 0) {
