@@ -4,6 +4,7 @@ export const API_ENDPOINTS = {
   PRODUCTS: '/products',
   CART: '/cart',
   ORDERS: '/orders/my', // Endpoint para pedidos do usuário
+  ADMIN_ORDERS: '/orders', // Endpoint para admin ver todos os pedidos
 } as const;
 
 export const ROUTES = {

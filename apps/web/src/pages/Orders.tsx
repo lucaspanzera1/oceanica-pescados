@@ -58,14 +58,24 @@ export const Orders: React.FC = () => {
   };
 
   const getStatusInfo = (status: Order['status']) => {
-    const statusMap = {
+    type StatusInfo = {
+      label: string;
+      color: string;
+      icon: JSX.Element;
+    };
+
+    type StatusMap = {
+      [key: string]: StatusInfo;
+    };
+    
+    const statusMap: StatusMap = {
       'pendente': {
         label: 'Pendente',
         color: 'bg-yellow-100 text-yellow-800',
         icon: <Clock className="h-4 w-4" />
       },
-      'processando': {
-        label: 'Processando',
+      'confirmado': {
+        label: 'Confirmado',
         color: 'bg-blue-100 text-blue-800',
         icon: <Loader className="h-4 w-4 animate-spin" />
       },
@@ -86,11 +96,12 @@ export const Orders: React.FC = () => {
       }
     };
     
-    return statusMap[status] || statusMap['pendente'];
+    const normalizedStatus = status.toLowerCase();
+    return statusMap[normalizedStatus] || statusMap['pendente'];
   };
 
   const canCancelOrder = (status: Order['status']) => {
-    return status === 'pendente' || status === 'processando';
+    return status === 'pendente' || status === 'confirmado';
   };
 
   const handleCreateOrder = async () => {

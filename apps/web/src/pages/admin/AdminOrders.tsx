@@ -1,16 +1,33 @@
 import React, { useEffect, useState } from 'react';
-import { useOrders } from '../../context/OrderContext';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '../../components/ui/table';
 import { Order } from '../../types/order';
 import { apiService } from '../../services/api';
+import { API_ENDPOINTS } from '../../utils/constants';
 import { toast } from 'react-toastify';
 
 export function AdminOrders() {
-  const { orders, fetchOrders, loading, error } = useOrders();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
 
+  const fetchAdminOrders = async () => {
+    try {
+      setLoading(true);
+      const response = await apiService.get<{ success: boolean; data: { orders: Order[] } }>(`${API_ENDPOINTS.ADMIN_ORDERS}`);
+      if (response.success && response.data) {
+        setOrders(response.data.orders);
+      }
+    } catch (err) {
+      setError('Erro ao carregar pedidos');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    fetchOrders();
+    fetchAdminOrders();
   }, []);
 
   const updateOrderStatus = async (orderId: string, status: 'confirmado' | 'enviado' | 'cancelado') => {
@@ -21,7 +38,7 @@ export function AdminOrders() {
       } else {
         await apiService.updateOrderStatus(orderId, status);
       }
-      await fetchOrders();
+      await fetchAdminOrders();
       toast.success(`Pedido ${status} com sucesso!`);
     } catch (err) {
       toast.error('Erro ao atualizar o status do pedido');
