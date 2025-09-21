@@ -11,6 +11,120 @@ class OrderService {
   }
 
   /**
+   * Cria um pedido externo (sem necessidade de usuário ou endereço cadastrado)
+   */
+  async createExternalOrder(items, customer, shipping_price = 0) {
+    const client = await pool.connect();
+    
+    try {
+      await client.query('BEGIN');
+
+      // Verificar disponibilidade de estoque
+      for (const item of items) {
+        const product = await client.query(
+          'SELECT id, name, stock FROM products WHERE id = $1',
+          [item.productId]
+        );
+
+        if (product.rows.length === 0) {
+          throw new Error(`Produto não encontrado: ${item.productId}`);
+        }
+        
+        if (product.rows[0].stock < item.quantity) {
+          throw new Error(`Estoque insuficiente para o produto: ${product.rows[0].name}`);
+        }
+      }
+
+      // Calcular preço total
+      let total_price = parseFloat(shipping_price);
+      for (const item of items) {
+        total_price += parseFloat(item.price) * parseInt(item.quantity);
+      }
+
+      // Criar o pedido
+      const orderResult = await client.query(`
+        INSERT INTO orders (
+          status,
+          shipping_price,
+          total_price,
+          user_name,
+          user_phone,
+          address_street,
+          address_number,
+          address_complement,
+          address_neighborhood,
+          address_city,
+          address_state,
+          address_zipcode,
+          is_external
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        RETURNING *
+      `, [
+        'pendente',
+        shipping_price,
+        total_price,
+        customer.name,
+        customer.phone,
+        customer.street,
+        customer.number,
+        customer.complement || null,
+        customer.neighborhood,
+        customer.city,
+        customer.state,
+        customer.zipcode,
+        true
+      ]);
+
+      const order = orderResult.rows[0];
+
+      // Criar itens do pedido e atualizar estoque
+      const orderItems = [];
+      for (const item of items) {
+        // Criar item do pedido
+        const orderItem = await client.query(`
+          INSERT INTO order_items (
+            order_id,
+            product_id,
+            quantity,
+            price,
+            subtotal
+          )
+          VALUES ($1, $2, $3, $4, $5)
+          RETURNING *
+        `, [
+          order.id,
+          item.productId,
+          item.quantity,
+          item.price,
+          parseFloat(item.price) * item.quantity
+        ]);
+
+        orderItems.push(orderItem.rows[0]);
+
+        // Atualizar estoque
+        await client.query(
+          'UPDATE products SET stock = stock - $1 WHERE id = $2',
+          [item.quantity, item.productId]
+        );
+      }
+
+      await client.query('COMMIT');
+
+      return {
+        ...order,
+        items: orderItems
+      };
+
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
    * Cria um novo pedido a partir do carrinho do usuário
    * @param {string} userId - UUID do usuário
    * @param {number} shippingPrice - Preço do frete
@@ -639,6 +753,170 @@ class OrderService {
           name: customerInfo.name,
           phone: customerInfo.phone
         }
+      };
+      
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Cria um pedido externo (pedido para cliente não registrado)
+   * @param {Object[]} items - Array de itens {product_id, quantity}
+   * @param {Object} customerInfo - Informações do cliente {name, phone}
+   * @param {Object} address - Endereço de entrega
+   * @param {number} shippingPrice - Preço do frete
+   * @returns {Object} Dados do pedido criado
+   */
+  async createExternalOrder(items, customerInfo, address, shippingPrice = 0) {
+    const client = await pool.connect();
+    
+    try {
+      await client.query('BEGIN');
+
+      // Validações
+      if (!items || !Array.isArray(items) || items.length === 0) {
+        throw new Error('É necessário informar pelo menos um item para o pedido');
+      }
+
+      if (!customerInfo?.name || !customerInfo?.phone) {
+        throw new Error('Nome e telefone do cliente são obrigatórios');
+      }
+
+      if (!address || !address.street || !address.city || !address.state || !address.postal_code) {
+        throw new Error('Endereço completo é obrigatório');
+      }
+
+      if (shippingPrice < 0) {
+        throw new Error('Preço do frete não pode ser negativo');
+      }
+
+      // Buscar produtos e validar estoque
+      const productIds = items.map(item => item.product_id);
+      const productsQuery = `
+        SELECT id, name, price, stock
+        FROM products
+        WHERE id = ANY($1::uuid[])
+      `;
+      
+      const productsResult = await client.query(productsQuery, [productIds]);
+      const products = productsResult.rows;
+
+      if (products.length !== productIds.length) {
+        throw new Error('Um ou mais produtos não foram encontrados');
+      }
+
+      // Criar usuário temporário para o pedido com email fictício e senha aleatória
+      const sanitizedPhone = customerInfo.phone.replace(/\D/g, '');
+      const tempEmail = `temp_${sanitizedPhone}@temp.oceanica.local`;
+      const tempPassword = `temp_${Math.random().toString(36).slice(2)}${Date.now()}`;
+      
+      const userQuery = `
+        INSERT INTO users (name, phone, email, password, role)
+        VALUES ($1, $2, $3, $4, 'customer')
+        RETURNING id
+      `;
+      
+      const userResult = await client.query(userQuery, [
+        customerInfo.name,
+        customerInfo.phone,
+        tempEmail,
+        tempPassword
+      ]);
+      
+      const userId = userResult.rows[0].id;
+
+      // Criar endereço para o usuário
+      const addressQuery = `
+        INSERT INTO addresses (
+          user_id, street, number, complement, neighborhood,
+          city, state, postal_code, is_default
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true)
+        RETURNING id
+      `;
+
+      const addressResult = await client.query(addressQuery, [
+        userId,
+        address.street,
+        address.number || '',
+        address.complement || '',
+        address.neighborhood || '',
+        address.city,
+        address.state,
+        address.postal_code
+      ]);
+
+      const addressId = addressResult.rows[0].id;
+
+      // Validar estoque e calcular total
+      let totalProducts = 0;
+      const productsMap = new Map(products.map(p => [p.id, p]));
+
+      for (const item of items) {
+        const product = productsMap.get(item.product_id);
+        if (product.stock < item.quantity) {
+          throw new Error(`Estoque insuficiente para o produto "${product.name}". Disponível: ${product.stock}, Solicitado: ${item.quantity}`);
+        }
+        totalProducts += parseFloat(product.price) * parseInt(item.quantity);
+      }
+
+      const totalPrice = totalProducts + parseFloat(shippingPrice);
+
+      // Criar o pedido
+      const orderQuery = `
+        INSERT INTO orders (user_id, shipping_price, total_price, address_id) 
+        VALUES ($1, $2, $3, $4) 
+        RETURNING id, user_id, status, shipping_price, total_price, address_id, created_at, updated_at
+      `;
+      
+      const orderResult = await client.query(orderQuery, [
+        userId,
+        parseFloat(shippingPrice),
+        totalPrice,
+        addressId
+      ]);
+      
+      const order = orderResult.rows[0];
+
+      // Preparar itens para o OrderItemService
+      const itemsForOrderService = items.map(item => ({
+        product_id: item.product_id,
+        quantity: parseInt(item.quantity),
+        price: parseFloat(productsMap.get(item.product_id).price)
+      }));
+
+      // Commit da transação atual para usar o OrderItemService
+      await client.query('COMMIT');
+      
+      // Usar o OrderItemService para criar os itens
+      const orderItems = await this.orderItemService.createOrderItems(order.id, itemsForOrderService);
+
+      // Nova transação para atualizar estoque
+      await client.query('BEGIN');
+
+      // Atualizar estoque dos produtos
+      for (const item of items) {
+        await client.query(
+          'UPDATE products SET stock = stock - $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+          [item.quantity, item.product_id]
+        );
+      }
+
+      await client.query('COMMIT');
+
+      return {
+        ...order,
+        items: orderItems,
+        total_products: totalProducts,
+        customer: {
+          name: customerInfo.name,
+          phone: customerInfo.phone
+        },
+        address
       };
       
     } catch (error) {

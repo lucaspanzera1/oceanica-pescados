@@ -9,9 +9,9 @@ export const useCartPersistence = () => {
   const saveCart = (cartState: CartState): void => {
     try {
       cartMemoryStorage = { ...cartState };
-      console.log('Carrinho salvo em memória:', cartState);
+      //console.log('Carrinho salvo em memória:', cartState);
     } catch (error) {
-      console.error('Erro ao salvar carrinho:', error);
+      //console.error('Erro ao salvar carrinho:', error);
     }
   };
 

@@ -59,6 +59,13 @@ router.patch('/:id/cancel',
  * Rotas administrativas - apenas para administradores
  */
 
+// Criar pedido externo (pedido pelo admin para cliente não registrado)
+router.post('/external',
+  authenticateToken,
+  requireAdmin,
+  controller.createExternalOrder
+);
+
 // Criar pedido pelo admin
 router.post('/admin',
   authenticateToken,
