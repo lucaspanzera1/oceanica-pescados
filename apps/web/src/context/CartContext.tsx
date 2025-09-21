@@ -259,11 +259,18 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => clearInterval(interval);
   }, [state.loading, isAuthenticated]);
 
+  // Limpar o carrinho quando o usuário faz logout
+  useEffect(() => {
+    if (!isAuthenticated) {
+      dispatch({ type: 'SET_CART', payload: null });
+    }
+  }, [isAuthenticated]);
+
   const value: CartContextType = {
     cart: state.cart,
     loading: state.loading,
     error: state.error,
-    totalItems: state.cart?.summary.totalItems || 0,
+    totalItems: state.cart?.summary?.totalItems || 0,
     addToCart,
     updateQuantity,
     removeItem,

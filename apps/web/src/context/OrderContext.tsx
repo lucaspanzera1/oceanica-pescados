@@ -2,6 +2,7 @@ import React, { createContext, useContext, useReducer, useEffect, ReactNode } fr
 import { apiService } from '../services/api';
 import { Order, CreateOrderRequest, OrderItem } from '../types/order';
 import { useOrderPersistence } from '../hooks/useOrderPersistence';
+import { useAuth } from '../hooks/useAuth';
 
 export interface OrderState {
   orders: Order[];
@@ -109,10 +110,17 @@ const initialState: OrderReducerState = {
 export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(orderReducer, initialState);
   const { saveOrders, loadOrders } = useOrderPersistence();
+  const { isAuthenticated } = useAuth();
 
   // Função para buscar pedidos
   const fetchOrders = async (page: number = 1): Promise<void> => {
     try {
+      // Se não estiver autenticado, não faz chamada à API
+      if (!isAuthenticated) {
+        dispatch({ type: 'SET_ORDERS', payload: { orders: [], pagination: null } });
+        return;
+      }
+
       dispatch({ type: 'SET_LOADING', payload: true });
       
       const response = await apiService.getOrders(page);
@@ -163,13 +171,16 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   // Função para criar um novo pedido
-  const createOrder = async (shippingPrice: number, addressId: string): Promise<Order> => {
+  const createOrder = async (shippingPrice: number): Promise<Order> => {
+    if (!isAuthenticated) {
+      throw new Error('Usuário não está autenticado');
+    }
+
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       
       const request: CreateOrderRequest = {
-        shipping_price: shippingPrice,
-        address_id: addressId
+        shipping_price: shippingPrice
       };
       
       const response = await apiService.createOrder(request);
@@ -207,6 +218,10 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   // Função para buscar itens de um pedido
   const getOrderItems = async (orderId: string): Promise<OrderItem[]> => {
+    if (!isAuthenticated) {
+      throw new Error('Usuário não está autenticado');
+    }
+
     try {
       const response = await apiService.getOrderItems(orderId);
       
@@ -224,6 +239,10 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   // Função para cancelar um pedido
   const cancelOrder = async (orderId: string): Promise<void> => {
+    if (!isAuthenticated) {
+      throw new Error('Usuário não está autenticado');
+    }
+
     try {
       const response = await apiService.cancelOrder(orderId);
       
@@ -260,10 +279,15 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
-  // Carregar pedidos na inicialização
+  // Carregar pedidos na inicialização e quando o estado de autenticação mudar
   useEffect(() => {
-    fetchOrders();
-  }, []);
+    if (isAuthenticated) {
+      fetchOrders();
+    } else {
+      // Se não estiver autenticado, limpa os pedidos
+      dispatch({ type: 'SET_ORDERS', payload: { orders: [], pagination: null } });
+    }
+  }, [isAuthenticated]);
 
   const value: OrderContextType = {
     orders: state.orders,
