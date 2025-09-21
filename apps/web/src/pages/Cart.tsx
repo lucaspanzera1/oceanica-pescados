@@ -4,7 +4,9 @@ import { Layout } from '../components/layout/Layout';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
 import { useOrders } from '../context/OrderContext';
-import { Trash2, Plus, Minus, ShoppingBag, AlertCircle, Loader } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingBag, AlertCircle, Loader, MapPin } from 'lucide-react';
+import { AddressSelection } from '../components/address/AddressSelection';
+import { Address } from '../types/address.types';
 
 export const Cart: React.FC = () => {
   const navigate = useNavigate();
@@ -13,6 +15,7 @@ export const Cart: React.FC = () => {
   
   const { createOrder } = useOrders();
   const [creatingOrder, setCreatingOrder] = useState(false);
+  const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
 
   // Estados para controlar loading de ações individuais
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
@@ -113,15 +116,23 @@ export const Cart: React.FC = () => {
 const handleCheckout = async () => {
   if (!cart) return;
   
+  if (!selectedAddress) {
+    showError(
+      'Endereço não selecionado',
+      'Por favor, selecione um endereço de entrega para continuar'
+    );
+    return;
+  }
+  
   setCreatingOrder(true);
   
   try {
     const shippingPrice = 0.0; // Valor fixo do frete
-    const newOrder = await createOrder(shippingPrice);
+    const newOrder = await createOrder(shippingPrice, selectedAddress.id);
     
     success(
       'Pedido criado com sucesso!',
-      `Pedido #${newOrder.id.slice(0, 8)} criado por ${formatPrice(newOrder.total_price)}`
+      `Pedido #${newOrder.id} criado por ${formatPrice(Number(newOrder.total_price))}`
     );
     
     // Limpar o carrinho após criar o pedido
@@ -365,6 +376,15 @@ const handleCheckout = async () => {
                   Resumo do Pedido
                 </h2>
                 
+                {/* Address Selection */}
+                <div className="mb-6">
+                  <AddressSelection
+                    onAddressSelect={setSelectedAddress}
+                    selectedAddressId={selectedAddress?.id}
+                  />
+                </div>
+
+                {/* Order Summary */}
                 <div className="space-y-3 mb-6">
                   <div className="flex justify-between text-gray-600">
                     <span>Subtotal ({cart.summary.totalItems} {cart.summary.totalItems === 1 ? 'item' : 'itens'})</span>

@@ -53,6 +53,7 @@ export interface OrdersResponse {
 
 export interface CreateOrderRequest {
   shipping_price: number;
+  address_id?: string;
 }
 
 export interface CreateOrderResponse {
