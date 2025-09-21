@@ -101,7 +101,7 @@ export const Orders: React.FC = () => {
   };
 
   const canCancelOrder = (status: Order['status']) => {
-    return status === 'pendente' || status === 'confirmado';
+    return status === 'pendente' || status === 'confirmado. ';
   };
 
   const handleCreateOrder = async () => {
@@ -523,7 +523,7 @@ export const Orders: React.FC = () => {
                                       Qtd: {item.quantity}
                                     </span>
                                     <span className="text-sm font-medium text-gray-900">
-                                      {formatPrice(item.unit_price)} cada
+                                      {formatPrice(item.price)} cada
                                     </span>
                                   </div>
                                 </div>
@@ -532,7 +532,7 @@ export const Orders: React.FC = () => {
                                 <div className="text-right">
                                   <p className="text-sm text-gray-500">Subtotal</p>
                                   <p className="text-lg font-semibold text-gray-900">
-                                    {formatPrice((parseFloat(item.unit_price) * parseInt(item.quantity)).toString())}
+                                    {formatPrice(item.subtotal)}
                                   </p>
                                 </div>
                               </div>
@@ -547,7 +547,7 @@ export const Orders: React.FC = () => {
                                 <span className="font-medium">
                                   {formatPrice(
                                     items.reduce((acc, item) => 
-                                      acc + (parseFloat(item.unit_price) * parseInt(item.quantity)), 0
+                                      acc + parseFloat(item.subtotal), 0
                                     ).toString()
                                   )}
                                 </span>

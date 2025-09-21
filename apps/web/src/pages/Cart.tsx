@@ -116,7 +116,7 @@ const handleCheckout = async () => {
   setCreatingOrder(true);
   
   try {
-    const shippingPrice = 15.50; // Valor fixo do frete
+    const shippingPrice = 0.0; // Valor fixo do frete
     const newOrder = await createOrder(shippingPrice);
     
     success(
