@@ -1,7 +1,7 @@
 import { API_ENDPOINTS } from '../utils/constants';
 import { ProductsResponse, ProductResponse } from '../types/product';
 import { CartResponse, AddToCartRequest, AddToCartResponse } from '../types/cart';
-import { OrdersResponse, CreateOrderRequest, CreateOrderResponse, OrderItemsResponse, CancelOrderResponse } from '../types/order';
+import { OrdersResponse, CreateOrderRequest, CreateOrderResponse, OrderItemsResponse, CancelOrderResponse, SimpleOrderData } from '../types/order';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -126,6 +126,14 @@ class ApiService {
   }
 
   // ============ MÉTODOS DE PEDIDOS ============
+
+  /**
+   * Cria um novo pedido simplificado (sem login)
+   * @param data Dados do pedido (nome, telefone e ID do produto)
+   */
+  async createSimpleOrder(data: SimpleOrderData): Promise<CreateOrderResponse> {
+    return this.post<CreateOrderResponse>('/orders/simple', data);
+  }
   
   /**
    * Busca todos os pedidos do usuário autenticado

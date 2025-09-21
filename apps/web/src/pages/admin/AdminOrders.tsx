@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Order } from '../../types/order';
+import { Product } from '../../types/products';
 import { apiService } from '../../services/api';
 import { API_ENDPOINTS } from '../../utils/constants';
-import { Package, Calendar, CreditCard, Truck, Loader, CheckCircle, Clock, XCircle, ChevronDown, ChevronUp, ImageIcon } from 'lucide-react';
+import { Package, Calendar, CreditCard, Truck, Loader, CheckCircle, Clock, XCircle, ChevronDown, ChevronUp, ImageIcon, PlusCircle } from 'lucide-react';
+import { SimpleOrderModal } from '../../components/admin/SimpleOrderModal';
 import { AddressDisplay } from '../../components/common/AddressDisplay';
 import { toast } from 'react-toastify';
 
@@ -63,6 +65,11 @@ export function AdminOrders() {
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [orderItems, setOrderItems] = useState<{ [orderId: string]: any[] }>({});
   const [loadingItems, setLoadingItems] = useState<{ [orderId: string]: boolean }>({});
+  
+  // Estados para o modal de pedido simples
+  const [isSimpleOrderModalOpen, setIsSimpleOrderModalOpen] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
 
   const fetchAdminOrders = async () => {
     try {
@@ -105,6 +112,32 @@ export function AdminOrders() {
     }
   };
 
+  const fetchProducts = async () => {
+    try {
+      setLoadingProducts(true);
+      const response = await apiService.getProducts(1, 100);
+      if (response.success && response.data?.products) {
+        setProducts(response.data.products);
+      }
+    } catch (err) {
+      toast.error('Erro ao carregar produtos');
+      console.error(err);
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  const handleOpenSimpleOrderModal = async () => {
+    if (products.length === 0) {
+      await fetchProducts();
+    }
+    setIsSimpleOrderModalOpen(true);
+  };
+
+  const handleSimpleOrderSuccess = () => {
+    fetchAdminOrders();
+  };
+
   useEffect(() => {
     fetchAdminOrders();
   }, []);
@@ -140,7 +173,23 @@ export function AdminOrders() {
               {orders.length} {orders.length === 1 ? 'pedido encontrado' : 'pedidos encontrados'}
             </p>
           </div>
+          <button
+            onClick={handleOpenSimpleOrderModal}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <PlusCircle className="h-5 w-5 mr-2" />
+            Criar Pedido Simples
+          </button>
         </div>
+
+        {/* Modal de Pedido Simples */}
+        <SimpleOrderModal
+          isOpen={isSimpleOrderModalOpen}
+          onClose={() => setIsSimpleOrderModalOpen(false)}
+          onSuccess={handleSimpleOrderSuccess}
+          products={products}
+          isLoading={loadingProducts}
+        />
 
         <div className="space-y-6">
           {orders?.map((order: Order) => {

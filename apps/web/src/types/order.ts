@@ -118,3 +118,10 @@ export interface OrderState {
   totalOrders: number;
   currentPage: number;
 }
+
+// Interface para pedido simplificado
+export interface SimpleOrderData {
+  productId: string;
+  username: string;
+  phone: string;
+}
