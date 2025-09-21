@@ -269,7 +269,7 @@ class OrderService {
       let orderQuery = `
         SELECT o.id, o.user_id, o.status, o.shipping_price, o.total_price, 
                o.created_at, o.updated_at, o.address_id,
-               u.email as user_email,
+               u.email as user_email, u.name as user_name, u.phone as user_phone,
                a.street, a.neighborhood, a.city, a.state, a.postal_code
         FROM orders o
         JOIN users u ON o.user_id = u.id
@@ -374,13 +374,13 @@ class OrderService {
       const query = `
         SELECT o.id, o.user_id, o.status, o.shipping_price, o.total_price, 
                o.created_at, o.updated_at, o.address_id,
-               u.email as user_email,
+               u.email as user_email, u.name as user_name, u.phone as user_phone,
                COUNT(oi.id) as items_count
         FROM orders o
         JOIN users u ON o.user_id = u.id
         LEFT JOIN order_items oi ON o.id = oi.order_id
         ${whereClause}
-        GROUP BY o.id, u.email
+        GROUP BY o.id, u.email, u.name, u.phone
         ORDER BY o.${sortBy} ${sortOrder.toUpperCase()}
         LIMIT $${paramCounter++} OFFSET $${paramCounter++}
       `;

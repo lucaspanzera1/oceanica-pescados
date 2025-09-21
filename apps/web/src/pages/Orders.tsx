@@ -368,7 +368,7 @@ export const Orders: React.FC = () => {
                               Pedido #{order.id.slice(0, 8)}
                             </h3>
                             <p className="text-sm text-gray-500">
-                              {order.user_email}
+                              {order.user_name} • {order.user_phone}
                             </p>
                           </div>
                         </div>

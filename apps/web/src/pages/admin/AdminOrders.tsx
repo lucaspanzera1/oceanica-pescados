@@ -160,9 +160,14 @@ export function AdminOrders() {
                         <h3 className="text-lg font-semibold text-gray-900">
                           Pedido #{order.id.slice(0, 8)}
                         </h3>
-                        <p className="text-sm text-gray-500">
-                          {order.user_email}
-                        </p>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">
+                            {order.user_name}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {order.user_phone} • {order.user_email}
+                          </p>
+                        </div>
                       </div>
                     </div>
                     

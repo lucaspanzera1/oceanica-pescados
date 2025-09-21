@@ -28,6 +28,8 @@ export interface Order {
   created_at: string;
   updated_at: string;
   user_email: string;
+  user_name: string;
+  user_phone: string;
   items_count: string;
   address_id: string;
   address?: Address;
