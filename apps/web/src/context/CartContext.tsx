@@ -2,6 +2,7 @@ import React, { createContext, useContext, useReducer, useEffect, ReactNode } fr
 import { apiService } from '../services/api';
 import { Cart } from '../types/cart';
 import { useCartPersistence } from '../hooks/useCartPersistence';
+import { useAuth } from '../hooks/useAuth';
 
 export interface CartState {
   items: any[];
@@ -13,6 +14,7 @@ interface CartContextType {
   cart: Cart | null;
   loading: boolean;
   error: string | null;
+  totalItems: number;
   addToCart: (productId: string, quantity: number) => Promise<void>;
   updateQuantity: (itemId: string, quantity: number) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
@@ -73,10 +75,21 @@ const initialState: CartReducerState = {
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(cartReducer, initialState);
   const { saveCart, loadCart } = useCartPersistence();
+  const { isAuthenticated } = useAuth();
 
   // Função para carregar o carrinho
   const fetchCart = async (): Promise<void> => {
     try {
+      // Se não estiver autenticado, apenas carrega do storage local
+      if (!isAuthenticated) {
+        const savedCart = loadCart();
+        if (savedCart) {
+          console.log('Carregado do storage local:', savedCart);
+          return;
+        }
+        return;
+      }
+
       dispatch({ type: 'SET_LOADING', payload: true });
       
       const response = await apiService.getCart();
@@ -220,13 +233,23 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     await fetchCart();
   };
 
-  // Carregar carrinho na inicialização
+  // Carregar carrinho na inicialização e quando o estado de autenticação mudar
   useEffect(() => {
-    fetchCart();
-  }, []);
+    if (isAuthenticated) {
+      fetchCart();
+    } else {
+      // Se não estiver autenticado, apenas tenta carregar do storage local
+      const savedCart = loadCart();
+      if (savedCart) {
+        dispatch({ type: 'SET_CART', payload: savedCart });
+      }
+    }
+  }, [isAuthenticated]);
 
-  // Auto-refresh do carrinho a cada 30 segundos (opcional)
+  // Auto-refresh do carrinho a cada 30 segundos (apenas se autenticado)
   useEffect(() => {
+    if (!isAuthenticated) return;
+
     const interval = setInterval(() => {
       if (!state.loading) {
         fetchCart();
@@ -234,12 +257,13 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [state.loading]);
+  }, [state.loading, isAuthenticated]);
 
   const value: CartContextType = {
     cart: state.cart,
     loading: state.loading,
     error: state.error,
+    totalItems: state.cart?.summary.totalItems || 0,
     addToCart,
     updateQuantity,
     removeItem,

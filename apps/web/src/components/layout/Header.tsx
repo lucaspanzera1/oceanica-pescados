@@ -269,24 +269,26 @@ export const Header: React.FC = () => {
                 <span>WhatsApp</span>
               </a>
 
-              {/* Cart Button - FUNCIONAL AGORA */}
-              <button 
-                onClick={handleCartClick}
-                className="relative p-2 text-gray-700 hover:text-blue-600 transition-colors duration-200 hover:bg-gray-50 rounded-lg"
-                title="Ver carrinho"
-              >
-                <ShoppingCart className="h-6 w-6" />
-                {totalItems > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center min-w-[1.25rem] animate-pulse">
-                    {totalItems > 99 ? '99+' : totalItems}
-                  </span>
-                )}
-                {totalItems === 0 && (
-                  <span className="absolute -top-1 -right-1 bg-gray-300 text-gray-600 text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    0
-                  </span>
-                )}
-              </button>
+              {/* Cart Button - Só aparece se estiver autenticado */}
+              {isAuthenticated && (
+                <button 
+                  onClick={handleCartClick}
+                  className="relative p-2 text-gray-700 hover:text-blue-600 transition-colors duration-200 hover:bg-gray-50 rounded-lg"
+                  title="Ver carrinho"
+                >
+                  <ShoppingCart className="h-6 w-6" />
+                  {totalItems > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center min-w-[1.25rem] animate-pulse">
+                      {totalItems > 99 ? '99+' : totalItems}
+                    </span>
+                  )}
+                  {totalItems === 0 && (
+                    <span className="absolute -top-1 -right-1 bg-gray-300 text-gray-600 text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      0
+                    </span>
+                  )}
+                </button>
+              )}
 
               {/* Mobile menu button */}
               <button
@@ -338,19 +340,23 @@ export const Header: React.FC = () => {
                   );
                 })}
 
-                {/* Mobile Cart Button */}
-                <button
-                  onClick={handleCartClick}
-                  className="flex items-center space-x-2 px-3 py-2 w-full text-left text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors text-sm font-medium rounded-lg"
-                >
-                  <ShoppingCart className="h-4 w-4" />
-                  <span>Carrinho ({totalItems})</span>
-                  {totalItems > 0 && (
-                    <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                      {totalItems}
-                    </span>
-                  )}
-                </button>
+                {/* Mobile Cart Button - Só aparece se estiver autenticado */}
+                {isAuthenticated && (
+                  <button
+                    onClick={handleCartClick}
+                    className="flex items-center justify-between px-3 py-2 w-full text-left text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors text-sm font-medium rounded-lg"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <ShoppingCart className="h-4 w-4" />
+                      <span>Carrinho</span>
+                    </div>
+                    {totalItems > 0 && (
+                      <span className="bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                        {totalItems > 99 ? '99+' : totalItems}
+                      </span>
+                    )}
+                  </button>
+                )}
                 
                 {/* Mobile WhatsApp */}
                 <a

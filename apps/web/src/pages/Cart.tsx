@@ -229,8 +229,8 @@ const handleCheckout = async () => {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gray-50 py-4">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-6">
           {/* Header */}
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900">
@@ -244,9 +244,9 @@ const handleCheckout = async () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
             {/* Lista de itens */}
-            <div className="lg:col-span-2 space-y-4">
+            <div className="lg:col-span-3 space-y-4">
               {cart.items.map((item) => {
                 const isUpdating = updatingItems.has(item.id);
                 const isRemoving = removingItems.has(item.id);
@@ -370,8 +370,8 @@ const handleCheckout = async () => {
             </div>
 
             {/* Resumo do pedido */}
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg shadow-md p-6 sticky top-8">
+            <div className="lg:col-span-2">
+              <div className="bg-white rounded-lg shadow-md p-8 sticky top-8">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">
                   Resumo do Pedido
                 </h2>
