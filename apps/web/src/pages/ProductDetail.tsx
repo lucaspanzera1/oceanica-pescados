@@ -290,7 +290,6 @@ const handleAddToCart = async () => {
                 <div className="space-y-3 pt-6 border-t">
                   <h3 className="font-semibold text-gray-900">Informações do Produto</h3>
                   <div className="text-sm text-gray-600 space-y-1">
-                    <p><strong>ID:</strong> {state.product.id}</p>
                     <p><strong>Criado em:</strong> {formatDate(state.product.created_at)}</p>
                     <p><strong>Última atualização:</strong> {formatDate(state.product.updated_at)}</p>
                   </div>

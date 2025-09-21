@@ -171,7 +171,7 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   // Função para criar um novo pedido
-  const createOrder = async (shippingPrice: number): Promise<Order> => {
+  const createOrder = async (shippingPrice: number, addressId: string): Promise<Order> => {
     if (!isAuthenticated) {
       throw new Error('Usuário não está autenticado');
     }
@@ -180,7 +180,8 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       dispatch({ type: 'SET_LOADING', payload: true });
       
       const request: CreateOrderRequest = {
-        shipping_price: shippingPrice
+        shipping_price: shippingPrice,
+        address_id: addressId
       };
       
       const response = await apiService.createOrder(request);
