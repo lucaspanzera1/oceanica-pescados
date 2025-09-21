@@ -78,9 +78,10 @@ CREATE TABLE IF NOT EXISTS public.cart_items (
 CREATE TABLE IF NOT EXISTS public.orders (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-    status VARCHAR(50) DEFAULT 'pendente', -- 'pendente' | 'confirmado' | 'enviado' | 'cancelado'
+    status VARCHAR(50) DEFAULT 'pendente',
     shipping_price NUMERIC(10,2) DEFAULT 0,
     total_price NUMERIC(10,2) NOT NULL,
+    address_id UUID REFERENCES addresses(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

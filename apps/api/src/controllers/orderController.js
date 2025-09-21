@@ -16,7 +16,23 @@ class OrderController {
   async createOrder(req, res) {
     try {
       const userId = req.user.id;
-      const { shipping_price = 0 } = req.body;
+      const { shipping_price = 0, address_id } = req.body;
+
+      // Validação do endereço
+      if (!address_id) {
+        return res.status(400).json({
+          success: false,
+          message: 'O ID do endereço de entrega é obrigatório'
+        });
+      }
+
+      // Validar se é um UUID válido
+      if (!this.orderService.isValidUUID(address_id)) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID do endereço inválido'
+        });
+      }
 
       // Validação do preço de frete
       let numericShipping = 0;
@@ -31,7 +47,7 @@ class OrderController {
       }
 
       // Cria o pedido
-      const order = await this.orderService.createOrder(userId, numericShipping);
+      const order = await this.orderService.createOrder(userId, numericShipping, address_id);
 
       res.status(201).json({
         success: true,
@@ -46,7 +62,9 @@ class OrderController {
       if (error.message.includes('Carrinho vazio') ||
           error.message.includes('Estoque insuficiente') ||
           error.message.includes('inválido') ||
-          error.message.includes('deve ser')) {
+          error.message.includes('deve ser') ||
+          error.message.includes('Endereço não encontrado') ||
+          error.message.includes('não pertence ao usuário')) {
         return res.status(400).json({
           success: false,
           message: error.message

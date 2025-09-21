@@ -117,6 +117,21 @@ CREATE TABLE IF NOT EXISTS public.customers (
       )
     `);
 
+    // Criar tabela de enderecos primeiro (porque orders precisa dela)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS public.addresses (
+        id UUID PRIMARY KEY DEFAULT ${uuidFunction},
+        user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+        street VARCHAR(255) NOT NULL,
+        city VARCHAR(100) NOT NULL,
+        state VARCHAR(50) NOT NULL,
+        postal_code VARCHAR(20) NOT NULL,
+        number VARCHAR(20),
+        complement VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // Criar tabela de pedidos
     await client.query(`
       CREATE TABLE IF NOT EXISTS orders (
@@ -125,6 +140,7 @@ CREATE TABLE IF NOT EXISTS public.customers (
         status VARCHAR(50) DEFAULT 'pendente' CHECK (status IN ('pendente', 'confirmado', 'enviado', 'cancelado')),
         shipping_price NUMERIC(10,2) DEFAULT 0 CHECK (shipping_price >= 0),
         total_price NUMERIC(10,2) NOT NULL CHECK (total_price >= 0),
+        address_id UUID REFERENCES addresses(id),
         customer_id UUID REFERENCES public.customers(id),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -140,21 +156,6 @@ CREATE TABLE IF NOT EXISTS public.customers (
         quantity INTEGER NOT NULL CHECK (quantity > 0),
         price DECIMAL(10,2) NOT NULL CHECK (price > 0),
         subtotal DECIMAL(10,2) NOT NULL CHECK (subtotal > 0),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-
-    // Criar tabela de enderecos
-        await client.query(`
-      CREATE TABLE IF NOT EXISTS public.addresses (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-        street VARCHAR(255) NOT NULL,
-        city VARCHAR(100) NOT NULL,
-        state VARCHAR(50) NOT NULL,
-        postal_code VARCHAR(20) NOT NULL,
-        number VARCHAR(20),
-        complement VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -207,6 +208,10 @@ CREATE TABLE IF NOT EXISTS public.customers (
 
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_orders_address_id ON orders(address_id)
     `);
 
     await client.query(`

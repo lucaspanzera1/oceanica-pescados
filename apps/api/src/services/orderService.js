@@ -16,7 +16,7 @@ class OrderService {
    * @param {number} shippingPrice - Preço do frete
    * @returns {Object} Dados do pedido criado
    */
-  async createOrder(userId, shippingPrice = 0) {
+  async createOrder(userId, shippingPrice = 0, addressId) {
     const client = await pool.connect();
     
     try {
@@ -29,6 +29,20 @@ class OrderService {
 
       if (shippingPrice < 0) {
         throw new Error('Preço do frete não pode ser negativo');
+      }
+
+      if (!this.isValidUUID(addressId)) {
+        throw new Error('ID de endereço inválido');
+      }
+
+      // Verificar se o endereço existe e pertence ao usuário
+      const addressQuery = `
+        SELECT id FROM addresses WHERE id = $1 AND user_id = $2
+      `;
+      const addressResult = await client.query(addressQuery, [addressId, userId]);
+      
+      if (addressResult.rows.length === 0) {
+        throw new Error('Endereço não encontrado ou não pertence ao usuário');
       }
 
       // Buscar itens do carrinho com produtos
@@ -64,15 +78,16 @@ class OrderService {
 
       // Criar o pedido (sem os itens ainda)
       const orderQuery = `
-        INSERT INTO orders (user_id, shipping_price, total_price) 
-        VALUES ($1, $2, $3) 
-        RETURNING id, user_id, status, shipping_price, total_price, created_at, updated_at
+        INSERT INTO orders (user_id, shipping_price, total_price, address_id) 
+        VALUES ($1, $2, $3, $4) 
+        RETURNING id, user_id, status, shipping_price, total_price, address_id, created_at, updated_at
       `;
       
       const orderResult = await client.query(orderQuery, [
         userId,
         parseFloat(shippingPrice),
-        totalPrice
+        totalPrice,
+        addressId
       ]);
       
       const order = orderResult.rows[0];
@@ -139,10 +154,12 @@ class OrderService {
       // Query base do pedido
       let orderQuery = `
         SELECT o.id, o.user_id, o.status, o.shipping_price, o.total_price, 
-               o.created_at, o.updated_at,
-               u.email as user_email
+               o.created_at, o.updated_at, o.address_id,
+               u.email as user_email,
+               a.street, a.neighborhood, a.city, a.state, a.postal_code
         FROM orders o
         JOIN users u ON o.user_id = u.id
+        LEFT JOIN addresses a ON o.address_id = a.id
         WHERE o.id = $1
       `;
       
