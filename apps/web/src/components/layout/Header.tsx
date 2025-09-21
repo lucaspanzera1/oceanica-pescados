@@ -147,17 +147,10 @@ export const Header: React.FC = () => {
                         <div className="text-gray-500">{user?.email}</div>
                         <div className="capitalize">{user?.role}</div>
                       </div>
+                    
                       
                       <Link 
                         to="/dashboard" 
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                      >
-                        <User className="h-4 w-4 mr-3" />
-                        Minha Área
-                      </Link>
-                      
-                      <Link 
-                        to="/perfil" 
                         className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                       >
                         <User className="h-4 w-4 mr-3" />

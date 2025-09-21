@@ -136,13 +136,24 @@ class AuthService {
       }
 
       const query = `
-        SELECT id, email, role, created_at, updated_at 
+        SELECT id, email, name, phone, role, created_at, updated_at 
         FROM users 
         WHERE id = $1
       `;
       const result = await pool.query(query, [id]);
       
-      return result.rows[0] || null;
+      if (result.rows[0]) {
+        const user = result.rows[0];
+        return {
+          ...user,
+          createdAt: user.created_at,
+          updatedAt: user.updated_at,
+          created_at: undefined,
+          updated_at: undefined
+        };
+      }
+      
+      return null;
       
     } catch (error) {
       console.error('Erro ao buscar usuário por ID:', error.message);
