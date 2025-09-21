@@ -259,7 +259,7 @@ class OrderService {
       // Query principal
       const query = `
         SELECT o.id, o.user_id, o.status, o.shipping_price, o.total_price, 
-               o.created_at, o.updated_at,
+               o.created_at, o.updated_at, o.address_id,
                u.email as user_email,
                COUNT(oi.id) as items_count
         FROM orders o
@@ -377,7 +377,7 @@ class OrderService {
         UPDATE orders 
         SET status = $1, updated_at = CURRENT_TIMESTAMP
         WHERE id = $2
-        RETURNING id, user_id, status, shipping_price, total_price, created_at, updated_at
+        RETURNING id, user_id, status, shipping_price, total_price, created_at, updated_at, address_id
       `;
 
       const result = await client.query(updateQuery, [newStatus, orderId]);

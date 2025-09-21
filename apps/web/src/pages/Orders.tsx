@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout/Layout';
 import { useOrders } from '../context/OrderContext';
+import { AddressDisplay } from '../components/common/AddressDisplay';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
 import { 
@@ -407,6 +408,15 @@ export const Orders: React.FC = () => {
                             <p className="text-sm font-medium text-gray-900">
                               {formatDate(order.created_at)}
                             </p>
+                          </div>
+                        </div>
+
+                        {/* Endereço de entrega */}
+                        <div className="flex items-start space-x-3 col-span-2">
+                          <Truck className="h-5 w-5 text-gray-400 flex-shrink-0 mt-1" />
+                          <div>
+                            <p className="text-sm text-gray-500">Endereço de entrega</p>
+                            <AddressDisplay addressId={order.address_id} />
                           </div>
                         </div>
 

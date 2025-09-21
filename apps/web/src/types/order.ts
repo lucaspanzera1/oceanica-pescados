@@ -1,3 +1,24 @@
+export interface Address {
+  id: string;
+  user_id: string;
+  street: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  number: string | null;
+  complement: string | null;
+  created_at: string;
+  user_email: string;
+}
+
+export interface AddressResponse {
+  success: boolean;
+  message: string;
+  data: {
+    address: Address;
+  };
+}
+
 export interface Order {
   id: string;
   user_id: string;
@@ -8,6 +29,8 @@ export interface Order {
   updated_at: string;
   user_email: string;
   items_count: string;
+  address_id: string;
+  address?: Address;
 }
 
 export interface OrdersPagination {

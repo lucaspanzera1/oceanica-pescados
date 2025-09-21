@@ -3,6 +3,7 @@ import { Order } from '../../types/order';
 import { apiService } from '../../services/api';
 import { API_ENDPOINTS } from '../../utils/constants';
 import { Package, Calendar, CreditCard, Truck, Loader, CheckCircle, Clock, XCircle, ChevronDown, ChevronUp, ImageIcon } from 'lucide-react';
+import { AddressDisplay } from '../../components/common/AddressDisplay';
 import { toast } from 'react-toastify';
 
 const formatPrice = (price: string) => {
@@ -174,8 +175,8 @@ export function AdminOrders() {
                   </div>
 
                   {/* Informações do pedido */}
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                    <div className="flex items-center space-x-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 mb-4">
+                    <div className="flex items-center space-x-3 lg:col-span-2">
                       <Calendar className="h-5 w-5 text-gray-400" />
                       <div>
                         <p className="text-sm text-gray-500">Data do pedido</p>
@@ -185,7 +186,7 @@ export function AdminOrders() {
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-3 lg:col-span-2">
                       <Package className="h-5 w-5 text-gray-400" />
                       <div>
                         <p className="text-sm text-gray-500">Itens</p>
@@ -195,23 +196,22 @@ export function AdminOrders() {
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-3">
-                      <Truck className="h-5 w-5 text-gray-400" />
-                      <div>
-                        <p className="text-sm text-gray-500">Frete</p>
-                        <p className="text-sm font-medium text-gray-900">
-                          {formatPrice(order.shipping_price)}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-3 lg:col-span-2">
                       <CreditCard className="h-5 w-5 text-gray-400" />
                       <div>
                         <p className="text-sm text-gray-500">Total</p>
                         <p className="text-lg font-bold text-green-600">
                           {formatPrice(order.total_price)}
                         </p>
+                      </div>
+                    </div>
+
+                    {/* Endereço de entrega */}
+                    <div className="flex items-start space-x-3 lg:col-span-6">
+                      <Truck className="h-5 w-5 text-gray-400 flex-shrink-0 mt-1" />
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-500 mb-1">Endereço de entrega</p>
+                        <AddressDisplay addressId={order.address_id} />
                       </div>
                     </div>
                   </div>

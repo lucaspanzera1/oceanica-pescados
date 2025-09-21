@@ -120,6 +120,11 @@ class ApiService {
     return this.delete<AddToCartResponse>(API_ENDPOINTS.CART);
   }
 
+  // ============ MÉTODOS DE ENDEREÇO ============
+  async getAddress(id: string): Promise<AddressResponse> {
+    return this.get<AddressResponse>(`/addresses/${id}`);
+  }
+
   // ============ MÉTODOS DE PEDIDOS ============
   
   /**
