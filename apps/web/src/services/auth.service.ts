@@ -22,7 +22,17 @@ export const authService = {
     return localStorage.getItem('token');
   },
 
+  setUserData(user: any): void {
+    localStorage.setItem('user', JSON.stringify(user));
+  },
+
+  getUserData(): any {
+    const userData = localStorage.getItem('user');
+    return userData ? JSON.parse(userData) : null;
+  },
+
   removeToken(): void {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
   },
 };

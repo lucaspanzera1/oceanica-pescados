@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Card, Button, Input } from '../components/ui';
-import { Fish, UserPlus, User, ArrowLeft, AlertTriangle, Loader2, CheckCircle } from 'lucide-react';
+import { Fish, UserPlus, User, ArrowLeft, AlertTriangle, Loader2 } from 'lucide-react';
 
 export const Register: React.FC = () => {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -18,28 +20,22 @@ export const Register: React.FC = () => {
     return <Navigate to="/dashboard" replace />;
   }
 
-  const validatePassword = (password: string) => {
-    const minLength = password.length >= 8;
-    const hasUpper = /[A-Z]/.test(password);
-    const hasLower = /[a-z]/.test(password);
-    const hasNumber = /\d/.test(password);
-    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+  const formatPhoneNumber = (value: string) => {
+    // Remove tudo que não for número
+    const numbers = value.replace(/\D/g, '');
     
-    return {
-      minLength,
-      hasUpper,
-      hasLower,
-      hasNumber,
-      hasSpecial,
-      isValid: minLength && hasUpper && hasLower && hasNumber && hasSpecial
-    };
+    // Aplica a máscara (XX) XXXXX-XXXX
+    if (numbers.length <= 11) {
+      return numbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    }
+    return numbers.slice(0, 11);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (!email || !password || !confirmPassword) {
+    if (!name || !email || !phone || !password || !confirmPassword) {
       setError('Por favor, preencha todos os campos');
       return;
     }
@@ -49,14 +45,13 @@ export const Register: React.FC = () => {
       return;
     }
 
-    const passwordValidation = validatePassword(password);
-    if (!passwordValidation.isValid) {
-      setError('A senha não atende aos requisitos mínimos');
+    if (password.length < 6) {
+      setError('A senha deve ter pelo menos 6 caracteres');
       return;
     }
 
     try {
-      const success = await register(email, password);
+      const success = await register(email, password, name, phone);
       
       if (success) {
         navigate('/dashboard');
@@ -67,8 +62,6 @@ export const Register: React.FC = () => {
       setError('Erro ao criar conta. Tente novamente.');
     }
   };
-
-  const passwordValidation = validatePassword(password);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-100 flex">
@@ -128,6 +121,15 @@ export const Register: React.FC = () => {
 
               <form onSubmit={handleSubmit} className="space-y-5">
                 <Input
+                  label="Nome"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Seu nome completo"
+                  required
+                  className="transition-all duration-200 focus:ring-blue-500 focus:border-blue-500"
+                />
+                <Input
                   label="Email"
                   type="email"
                   value={email}
@@ -137,42 +139,25 @@ export const Register: React.FC = () => {
                   className="transition-all duration-200 focus:ring-blue-500 focus:border-blue-500"
                 />
 
-                <div>
-                  <Input
-                    label="Senha"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    required
-                    className="transition-all duration-200 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                  
-                  {password && (
-                    <div className="mt-2 space-y-1 text-sm">
-                      <div className={`flex items-center ${passwordValidation.minLength ? 'text-green-600' : 'text-red-600'}`}>
-                        <CheckCircle className={`mr-1 h-3 w-3 ${passwordValidation.minLength ? '' : 'opacity-30'}`} />
-                        Mínimo 8 caracteres
-                      </div>
-                      <div className={`flex items-center ${passwordValidation.hasUpper ? 'text-green-600' : 'text-red-600'}`}>
-                        <CheckCircle className={`mr-1 h-3 w-3 ${passwordValidation.hasUpper ? '' : 'opacity-30'}`} />
-                        Uma letra maiúscula
-                      </div>
-                      <div className={`flex items-center ${passwordValidation.hasLower ? 'text-green-600' : 'text-red-600'}`}>
-                        <CheckCircle className={`mr-1 h-3 w-3 ${passwordValidation.hasLower ? '' : 'opacity-30'}`} />
-                        Uma letra minúscula
-                      </div>
-                      <div className={`flex items-center ${passwordValidation.hasNumber ? 'text-green-600' : 'text-red-600'}`}>
-                        <CheckCircle className={`mr-1 h-3 w-3 ${passwordValidation.hasNumber ? '' : 'opacity-30'}`} />
-                        Um número
-                      </div>
-                      <div className={`flex items-center ${passwordValidation.hasSpecial ? 'text-green-600' : 'text-red-600'}`}>
-                        <CheckCircle className={`mr-1 h-3 w-3 ${passwordValidation.hasSpecial ? '' : 'opacity-30'}`} />
-                        Um caractere especial
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <Input
+                  label="Telefone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(formatPhoneNumber(e.target.value))}
+                  placeholder="(00) 00000-0000"
+                  required
+                  className="transition-all duration-200 focus:ring-blue-500 focus:border-blue-500"
+                />
+
+                <Input
+                  label="Senha"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  className="transition-all duration-200 focus:ring-blue-500 focus:border-blue-500"
+                />
 
                 <Input
                   label="Confirmar Senha"
@@ -196,7 +181,7 @@ export const Register: React.FC = () => {
                 <Button
                   type="submit"
                   loading={loading}
-                  disabled={!passwordValidation.isValid || password !== confirmPassword}
+                  disabled={!name || !email || !phone || !password || password !== confirmPassword || password.length < 6}
                   className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                   size="large"
                 >

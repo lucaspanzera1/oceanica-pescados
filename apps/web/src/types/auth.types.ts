@@ -34,7 +34,7 @@ export interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (email: string, password: string) => Promise<boolean>;
+  register: (email: string, password: string, name: string, phone: string) => Promise<boolean>;
   logout: () => void;
   loading: boolean;
   isAuthenticated: boolean;
@@ -45,6 +45,8 @@ export interface AuthContextType {
 export interface RegisterRequest {
   email: string;
   password: string;
+  name: string;
+  phone: string;
   role: string;
 }
 
@@ -58,12 +60,3 @@ export interface RegisterResponse {
   message?: string;
 }
 
-export interface AuthContextType {
-  user: User | null;
-  token: string | null;
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (email: string, password: string) => Promise<boolean>; // Adicionar esta linha
-  logout: () => void;
-  loading: boolean;
-  isAuthenticated: boolean;
-}

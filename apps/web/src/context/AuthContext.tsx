@@ -29,19 +29,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const initAuth = async () => {
       const savedToken = authService.getToken();
+      const savedUser = authService.getUserData();
       
-      if (savedToken) {
+      if (savedToken && savedUser) {
         try {
+          // Set initial state from localStorage
+          setUser(savedUser);
+          setToken(savedToken);
+          
+          // Validate token and update user data in background
           const response = await authService.getProfile();
           if (response.success) {
             setUser(response.data.user);
-            setToken(savedToken);
+            authService.setUserData(response.data.user);
           } else {
             authService.removeToken();
+            setUser(null);
+            setToken(null);
           }
         } catch (error) {
           console.error('Erro ao validar token:', error);
           authService.removeToken();
+          setUser(null);
+          setToken(null);
         }
       }
       
@@ -60,6 +70,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(response.data.user);
         setToken(response.data.token);
         authService.setToken(response.data.token);
+        authService.setUserData(response.data.user);
         return true;
       }
       
@@ -72,12 +83,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const register = async (email: string, password: string): Promise<boolean> => {
+  const register = async (email: string, password: string, name: string, phone: string): Promise<boolean> => {
     try {
       setLoading(true);
       const response = await authService.register({
         email,
         password,
+        name,
+        phone,
         role: 'cliente'
       });
       
@@ -85,6 +98,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(response.data.user);
         setToken(response.data.token);
         authService.setToken(response.data.token);
+        authService.setUserData(response.data.user);
         return true;
       }
       

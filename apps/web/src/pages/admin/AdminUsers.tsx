@@ -35,7 +35,6 @@ export function AdminUsers() {
   };
 
   return (
-    <AdminLayout>
       <div className="p-6">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Clientes</h1>
@@ -94,6 +93,5 @@ export function AdminUsers() {
           </div>
         )}
       </div>
-    </AdminLayout>
   );
 }
