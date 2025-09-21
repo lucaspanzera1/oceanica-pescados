@@ -292,6 +292,98 @@ class OrderController {
   }
 
   /**
+   * POST /orders/admin
+   * Cria um pedido diretamente pelo admin
+   */
+  async createAdminOrder(req, res) {
+    try {
+      const { items, customer, shipping_price = 0 } = req.body;
+
+      // Validações básicas
+      if (!items || !Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'É necessário informar pelo menos um item para o pedido'
+        });
+      }
+
+      if (!customer?.name || !customer?.phone) {
+        return res.status(400).json({
+          success: false,
+          message: 'Nome e telefone do cliente são obrigatórios'
+        });
+      }
+
+      // Validar estrutura dos itens
+      for (const item of items) {
+        if (!item.product_id || !item.quantity) {
+          return res.status(400).json({
+            success: false,
+            message: 'Cada item deve ter product_id e quantity'
+          });
+        }
+
+        if (!this.orderService.isValidUUID(item.product_id)) {
+          return res.status(400).json({
+            success: false,
+            message: 'ID de produto inválido'
+          });
+        }
+
+        const quantity = parseInt(item.quantity);
+        if (isNaN(quantity) || quantity <= 0) {
+          return res.status(400).json({
+            success: false,
+            message: 'Quantidade deve ser um número maior que zero'
+          });
+        }
+      }
+
+      // Validação do frete
+      let numericShipping = 0;
+      if (shipping_price !== undefined && shipping_price !== null) {
+        numericShipping = parseFloat(shipping_price);
+        if (isNaN(numericShipping) || numericShipping < 0) {
+          return res.status(400).json({
+            success: false,
+            message: 'Preço do frete deve ser um número válido maior ou igual a zero'
+          });
+        }
+      }
+
+      const order = await this.orderService.createAdminOrder(
+        items,
+        customer,
+        numericShipping
+      );
+
+      res.status(201).json({
+        success: true,
+        message: 'Pedido criado com sucesso',
+        data: { order }
+      });
+
+    } catch (error) {
+      logError(error, req);
+
+      if (error.message.includes('não encontrado') ||
+          error.message.includes('Estoque insuficiente') ||
+          error.message.includes('obrigatório') ||
+          error.message.includes('inválido')) {
+        return res.status(400).json({
+          success: false,
+          message: error.message
+        });
+      }
+
+      res.status(500).json({
+        success: false,
+        message: 'Erro interno do servidor'
+      });
+    }
+  }
+
+  /**
    * GET /orders/my
    * Lista apenas os pedidos do usuário logado
    */

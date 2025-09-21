@@ -77,6 +77,17 @@ const initializeDatabase = async () => {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+      
+          // Criar tabela de usuários com UUID
+    await client.query(`
+CREATE TABLE IF NOT EXISTS public.customers (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
+    `);
 
     // Criar tabela de produtos com UUID
     await client.query(`
@@ -114,6 +125,7 @@ const initializeDatabase = async () => {
         status VARCHAR(50) DEFAULT 'pendente' CHECK (status IN ('pendente', 'confirmado', 'enviado', 'cancelado')),
         shipping_price NUMERIC(10,2) DEFAULT 0 CHECK (shipping_price >= 0),
         total_price NUMERIC(10,2) NOT NULL CHECK (total_price >= 0),
+        customer_id UUID REFERENCES public.customers(id),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )

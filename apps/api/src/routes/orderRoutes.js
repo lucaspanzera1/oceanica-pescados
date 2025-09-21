@@ -59,6 +59,13 @@ router.patch('/:id/cancel',
  * Rotas administrativas - apenas para administradores
  */
 
+// Criar pedido pelo admin
+router.post('/admin',
+  authenticateToken,
+  requireAdmin,
+  controller.createAdminOrder
+);
+
 // Listar todos os pedidos (admin)
 router.get('/', 
   authenticateToken, 
